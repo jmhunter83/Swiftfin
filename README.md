@@ -1,62 +1,53 @@
 <div align="center">
-  <img alt="Swiftfin" src="./Resources/primary-wide.svg">
 
-  <h1>Swiftfin</h1>
-  <img src="https://img.shields.io/badge/iOS-16+-red"/>
-  <img src="https://img.shields.io/badge/tvOS-17+-red"/>
-  <img src="https://img.shields.io/badge/Jellyfin-10.11-9962be"/>
-  
-  <a href="https://translate.jellyfin.org/engage/swiftfin/">
-    <img src="https://translate.jellyfin.org/widgets/swiftfin/-/svg-badge.svg"/>
-  </a>
-  <a href="https://matrix.to/#/#jellyfin:matrix.org">
-    <img src="https://img.shields.io/matrix/jellyfin:matrix.org">
-  </a>
-  <a href="https://discord.gg/zHBxVSXdBV">
-    <img src="https://img.shields.io/badge/Talk%20on-Discord-brightgreen">
-  </a>
+# atv-fin
+
+**A tvOS-focused Jellyfin client**
+
+<img src="https://img.shields.io/badge/tvOS-17+-blue"/>
+<img src="https://img.shields.io/badge/Jellyfin-10.11-9962be"/>
+
 </div>
 
-<p align="center">
-  <b>Swiftfin</b> is a modern video client for the <a href="https://github.com/jellyfin/jellyfin">Jellyfin</a> media server. Made using Swift to maximize direct play with the power of <b>VLC</b> and look <b>native</b> on all classes of Apple devices.
-</p>
+> **Note:** This is an independent project, not affiliated with or endorsed by [Jellyfin](https://jellyfin.org) or [Swiftfin](https://github.com/jellyfin/swiftfin). It is a fork of Swiftfin, developed separately with a focus on Apple TV.
 
-## ⚡️ Download
+---
 
-<a href="https://apps.apple.com/us/app/swiftfin/id1604098728">
-  <img height=75 alt="Download on the Apple App Store" src="./Resources/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg"/>
-</a>
+## About
 
-## 🛠️ TestFlight
+**atv-fin** is a native Jellyfin media client built exclusively for Apple TV. It uses VLC for direct playback and is designed to feel native on tvOS.
 
-Use the TestFlight version to test new features and bug fixes before being published to the App Store. We are grateful for your time and resources for reporting new bugs.
+This project focuses purely on the tvOS experience — no iOS, just Apple TV.
 
-> [!NOTE]
-> Only iOS has a TestFlight version. See [this discussion](https://github.com/jellyfin/Swiftfin/discussions/1294) for tvOS updates.
+---
 
-<a href="https://testflight.apple.com/join/SqNPfdxq">
-  <img height=75 alt="Get the beta on TestFlight" src="./Resources/testflight.svg"/>
-</a>
+## Features
 
-## 📖 Documentation
+- **tvOS 18 Liquid Glass** — Native glass transport bar with tvOS 17 fallback
+- **Redesigned playback controls** — Clean layout in bottom 15% of screen
+- **Native progress slider** — Pill-shaped, 8px height
+- **Full-screen item views** — Proper detail views, not cards
+- **Improved focus states** — Smooth scale animations on button focus
+- **tvOS 18+ compatibility** — Sheet presentation and TextField fixes
 
-Swiftfin provides detailed documentation to help you understand key aspects of the app and its development approach:
+---
 
-- [🎞️ Library Support](https://github.com/jellyfin/Swiftfin/blob/main/Documentation/libraries.md) — Information on **library compatibility** and supported media types in Swiftin.
-- [🎬 Media Playback](https://github.com/jellyfin/Swiftfin/blob/main/Documentation/players.md) — Learn about Swiftfin's **Native** and **Swiftfin** players and how their features vary.
-- [🧩 OS Version Support](https://github.com/jellyfin/Swiftfin/blob/main/Documentation/version.md) — Read about how we determine the **minimum supported OS** and which versions of iOS & tvOS are supported.
-- [💜 Supporting Development](https://jellyfin.org/docs/general/contributing/direct-donations) — Learn how you can **support the project developers** and help keep Swiftfin improving.
+## Installation
 
-## ⚙️ Development
+Available via TestFlight.
 
-Thank you for your interest in Swiftfin! Please check out the [Contribution Guidelines](https://github.com/jellyfin/Swiftfin/blob/main/Documentation/contributing.md) to get started.
+<!-- TestFlight link coming soon -->
 
-## 📚 Translations
+---
 
-**Don't see Swiftfin in your language?**
+## Acknowledgments
 
-Check out our [Weblate instance](https://translate.jellyfin.org/projects/swiftfin/) to help translate Swiftfin and other Jellyfin projects.
+Built on the work of:
+- [Jellyfin](https://jellyfin.org) — The free software media system
+- [Swiftfin](https://github.com/jellyfin/swiftfin) — The original Swift client this project was forked from
 
-<a href="https://translate.jellyfin.org/engage/swiftfin/">
-<img src="https://translate.jellyfin.org/widgets/swiftfin/-/multi-auto.svg"/>
-</a>
+---
+
+## License
+
+This project is licensed under the [Mozilla Public License 2.0](LICENSE.md).
