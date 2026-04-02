@@ -10,6 +10,7 @@ import Combine
 import Defaults
 import Foundation
 import JellyfinAPI
+import UIKit
 
 // TODO: respond properly to end of playback
 //       - when item changes
@@ -69,6 +70,16 @@ class MediaProgressObserver: ViewModel, MediaPlayerObserver {
 
         manager.$playbackRequestStatus
             .sink { [weak self] in self?.playbackRequestStatusDidChange($0) }
+            .store(in: &cancellables)
+
+        // Flush current position to the server when the app is about to resign active
+        // (device sleep, Home press). This fires before didEnterBackground, giving the
+        // network request time to land before the system suspends us.
+        NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)
+            .sink { [weak self] _ in
+                guard let self, let item = self.item else { return }
+                self.sendProgressReport(for: item, seconds: self.manager?.seconds)
+            }
             .store(in: &cancellables)
     }
 

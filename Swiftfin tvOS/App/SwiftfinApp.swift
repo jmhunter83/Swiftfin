@@ -84,8 +84,17 @@ struct SwiftfinApp: App {
                     let isAudioItem = mediaPlayerManager.item.type == .audio || mediaPlayerManager.item.type == .audioBook
 
                     if hasActivePlayback, !isAudioItem {
-                        // Cut audio immediately, then clean up manager state.
+                        // Snapshot position before teardown so the stop report captures it
+                        // even if proxy.stop() resets the seconds value.
+                        let capturedSeconds = mediaPlayerManager.seconds
+
                         mediaPlayerManager.proxy?.stop()
+
+                        // Restore captured position so the observer's stop report reads it.
+                        if capturedSeconds > .zero {
+                            mediaPlayerManager.seconds = capturedSeconds
+                        }
+
                         mediaPlayerManager.stop()
                     }
                 }
