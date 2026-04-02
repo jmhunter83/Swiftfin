@@ -236,15 +236,23 @@ extension VideoPlayer {
                 .store(in: &cancellables)
         }
 
+        /// Request a focus update only when the view is still in the hierarchy.
+        /// Guards against triggering UIKit's motion-effect applicator while views
+        /// are being torn down, which can crash on tvOS 26.2 (FB: rdar://…).
+        private func requestFocusUpdateIfSafe() {
+            guard isViewLoaded, view.window != nil else { return }
+            setNeedsFocusUpdate()
+            updateFocusIfNeeded()
+        }
+
         private func setupFocusObserver() {
             containerState.$overlayState
                 .removeDuplicates()
                 .sink { [weak self] (state: OverlayVisibility) in
                     guard let self else { return }
                     if state == .visible {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + AnimationTiming.focusUpdateDelay) {
-                            self.setNeedsFocusUpdate()
-                            self.updateFocusIfNeeded()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + AnimationTiming.focusUpdateDelay) { [weak self] in
+                            self?.requestFocusUpdateIfSafe()
                         }
                     }
                 }
@@ -255,9 +263,8 @@ extension VideoPlayer {
                 .sink { [weak self] (state: SupplementVisibility) in
                     guard let self else { return }
                     if state == .open {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + AnimationTiming.focusUpdateDelay) {
-                            self.setNeedsFocusUpdate()
-                            self.updateFocusIfNeeded()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + AnimationTiming.focusUpdateDelay) { [weak self] in
+                            self?.requestFocusUpdateIfSafe()
                         }
                     }
                 }
