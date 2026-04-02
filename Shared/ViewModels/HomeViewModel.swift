@@ -74,12 +74,12 @@ final class HomeViewModel: ViewModel, Stateful {
 
         Notifications[.itemMetadataDidChange]
             .publisher
-            .sink { _ in
+            .sink { [weak self] _ in
                 // Necessary because when this notification is posted, even with asyncAfter,
                 // the view will cause layout issues since it will redraw while in landscape.
                 // TODO: look for better solution
                 DispatchQueue.main.async {
-                    self.notificationsReceived.insert(.itemMetadataDidChange)
+                    self?.notificationsReceived.insert(.itemMetadataDidChange)
                 }
             }
             .store(in: &cancellables)
