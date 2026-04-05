@@ -6,11 +6,11 @@
 	objectVersion = 71;
 	objects = {
 
-	/* Begin PBXBuildFile section */
-			08BEEA4E5F77A74D7B6FE59F /* VideoPlayerContainerStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DAEE9EF7528B67B93A71FB1 /* VideoPlayerContainerStateTests.swift */; };
-			53ABFDDC267972BF00886593 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53ABFDDB267972BF00886593 /* TVServices.framework */; };
-			62666DFA27E5013700EC0ECD /* TVVLCKit.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 625CB57D2678E81E00530A6E /* TVVLCKit.xcframework */; };
-			62666DFB27E5013700EC0ECD /* TVVLCKit.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 625CB57D2678E81E00530A6E /* TVVLCKit.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* Begin PBXBuildFile section */
+		08BEEA4E5F77A74D7B6FE59F /* VideoPlayerContainerStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DAEE9EF7528B67B93A71FB1 /* VideoPlayerContainerStateTests.swift */; };
+		53ABFDDC267972BF00886593 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53ABFDDB267972BF00886593 /* TVServices.framework */; };
+		62666DFA27E5013700EC0ECD /* TVVLCKit.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 625CB57D2678E81E00530A6E /* TVVLCKit.xcframework */; };
+		62666DFB27E5013700EC0ECD /* TVVLCKit.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 625CB57D2678E81E00530A6E /* TVVLCKit.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		62666E1327E501C300EC0ECD /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62666E1227E501C300EC0ECD /* AudioToolbox.framework */; };
 		62666E1527E501C800EC0ECD /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62666E1427E501C800EC0ECD /* AVFoundation.framework */; };
 		62666E1727E501CC00EC0ECD /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62666E1627E501CC00EC0ECD /* CFNetwork.framework */; };
@@ -25,12 +25,11 @@
 		62666E2E27E5021400EC0ECD /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62666E2D27E5021400EC0ECD /* Security.framework */; };
 		62666E3027E5021800EC0ECD /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62666E2F27E5021800EC0ECD /* VideoToolbox.framework */; };
 		62666E3227E5021E00EC0ECD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62666E3127E5021E00EC0ECD /* UIKit.framework */; };
-			6C6178530A261AC4FD50E4DC /* MediaErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */; };
-			B6FD5626C1D953D86DA73199 /* NetworkErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1279A92061D12F3D7D8B6C9E /* NetworkErrorTests.swift */; };
-			EE9A94A7172E4DA099EED926 /* MediaPlayerItemAudioSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */; };
-			BD88CB422D77E6A0006BB5E3 /* TVOSPicker in Frameworks */ = {isa = PBXBuildFile; productRef = BD88CB412D77E6A0006BB5E3 /* TVOSPicker */; };
-			D04348C2BD461D556AC693DF /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C1438DC36A93916AACE477B /* Foundation.framework */; };
-			E1002B6B2793E36600E47059 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E1002B6A2793E36600E47059 /* Algorithms */; };
+		6C6178530A261AC4FD50E4DC /* MediaErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */; };
+		B6FD5626C1D953D86DA73199 /* NetworkErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1279A92061D12F3D7D8B6C9E /* NetworkErrorTests.swift */; };
+		BD88CB422D77E6A0006BB5E3 /* TVOSPicker in Frameworks */ = {isa = PBXBuildFile; productRef = BD88CB412D77E6A0006BB5E3 /* TVOSPicker */; };
+		D04348C2BD461D556AC693DF /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C1438DC36A93916AACE477B /* Foundation.framework */; };
+		E1002B6B2793E36600E47059 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E1002B6A2793E36600E47059 /* Algorithms */; };
 		E1137D312E090C230091EB60 /* VLCUI in Frameworks */ = {isa = PBXBuildFile; productRef = E1137D302E090C230091EB60 /* VLCUI */; };
 		E1153DD22BBB649C00424D36 /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = E1153DD12BBB649C00424D36 /* SVGKit */; };
 		E1155ACB2D0584A90021557A /* IdentifiedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = E1155ACA2D0584A90021557A /* IdentifiedCollections */; };
@@ -56,6 +55,7 @@
 		E1B5F7AB29577BCE004B26CF /* PulseUI in Frameworks */ = {isa = PBXBuildFile; productRef = E1B5F7AA29577BCE004B26CF /* PulseUI */; };
 		E1B5F7AD29577BDD004B26CF /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = E1B5F7AC29577BDD004B26CF /* OrderedCollections */; };
 		E1E2D7BF2E3FD936004E2E5F /* Transmission in Frameworks */ = {isa = PBXBuildFile; productRef = E1E2D7BE2E3FD936004E2E5F /* Transmission */; };
+		EE9A94A7172E4DA099EED926 /* MediaPlayerItemAudioSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,12 +82,11 @@
 		};
 /* End PBXCopyFilesBuildPhase section */
 
-	/* Begin PBXFileReference section */
-			1279A92061D12F3D7D8B6C9E /* NetworkErrorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkErrorTests.swift; sourceTree = "<group>"; };
-			E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MediaPlayerItemAudioSelectionTests.swift; sourceTree = "<group>"; };
-			535870602669D21600D05A09 /* Swiftfin tvOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Swiftfin tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-			5362E4A7267D4067000E2F71 /* GoogleCast.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GoogleCast.framework; path = "../../Downloads/GoogleCastSDK-ios-4.6.0_dynamic/GoogleCast.framework"; sourceTree = "<group>"; };
-			5362E4AA267D40AD000E2F71 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+/* Begin PBXFileReference section */
+		1279A92061D12F3D7D8B6C9E /* NetworkErrorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkErrorTests.swift; sourceTree = "<group>"; };
+		535870602669D21600D05A09 /* Swiftfin tvOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Swiftfin tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5362E4A7267D4067000E2F71 /* GoogleCast.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GoogleCast.framework; path = "../../Downloads/GoogleCastSDK-ios-4.6.0_dynamic/GoogleCast.framework"; sourceTree = "<group>"; };
+		5362E4AA267D40AD000E2F71 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		5362E4AC267D40B1000E2F71 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		5362E4AE267D40B5000E2F71 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		5362E4B0267D40B9000E2F71 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
@@ -140,6 +139,7 @@
 		796E798440A8807BC2883549 /* Swiftfin tvOS Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Swiftfin tvOS Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MediaErrorTests.swift; sourceTree = "<group>"; };
 		E1B2AB9628808CDF0072B3B9 /* GoogleCast.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = GoogleCast.xcframework; path = Carthage/Build/GoogleCast.xcframework; sourceTree = "<group>"; };
+		E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MediaPlayerItemAudioSelectionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -348,17 +348,17 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-			AAD4A20CAC7D1BEC55450E5C /* Swiftfin tvOS Tests */ = {
-				isa = PBXGroup;
-				children = (
-					5DAEE9EF7528B67B93A71FB1 /* VideoPlayerContainerStateTests.swift */,
-					1279A92061D12F3D7D8B6C9E /* NetworkErrorTests.swift */,
-					B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */,
-					E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */,
-				);
-				path = "Swiftfin tvOS Tests";
-				sourceTree = "<group>";
-			};
+		AAD4A20CAC7D1BEC55450E5C /* Swiftfin tvOS Tests */ = {
+			isa = PBXGroup;
+			children = (
+				5DAEE9EF7528B67B93A71FB1 /* VideoPlayerContainerStateTests.swift */,
+				1279A92061D12F3D7D8B6C9E /* NetworkErrorTests.swift */,
+				B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */,
+				E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */,
+			);
+			path = "Swiftfin tvOS Tests";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -634,17 +634,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-			FCAD6A1BEF4590C86AB68979 /* Sources */ = {
-				isa = PBXSourcesBuildPhase;
-				buildActionMask = 2147483647;
-				files = (
-					08BEEA4E5F77A74D7B6FE59F /* VideoPlayerContainerStateTests.swift in Sources */,
-					B6FD5626C1D953D86DA73199 /* NetworkErrorTests.swift in Sources */,
-					6C6178530A261AC4FD50E4DC /* MediaErrorTests.swift in Sources */,
-					EE9A94A7172E4DA099EED926 /* MediaPlayerItemAudioSelectionTests.swift in Sources */,
-				);
-				runOnlyForDeploymentPostprocessing = 0;
-			};
+		FCAD6A1BEF4590C86AB68979 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				08BEEA4E5F77A74D7B6FE59F /* VideoPlayerContainerStateTests.swift in Sources */,
+				B6FD5626C1D953D86DA73199 /* NetworkErrorTests.swift in Sources */,
+				6C6178530A261AC4FD50E4DC /* MediaErrorTests.swift in Sources */,
+				EE9A94A7172E4DA099EED926 /* MediaPlayerItemAudioSelectionTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -699,7 +699,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-					MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jmhunter.reefy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = appletvos;
@@ -729,7 +729,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-					MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jmhunter.reefy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = appletvos;

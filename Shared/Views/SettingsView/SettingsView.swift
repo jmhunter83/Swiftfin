@@ -24,9 +24,6 @@ struct SettingsView: View {
     @Default(.userAccentColor)
     private var accentColor
 
-    @Default(.VideoPlayer.videoPlayerType)
-    private var videoPlayerType
-
     @StateObject
     private var viewModel = SettingsViewModel()
 
@@ -113,16 +110,6 @@ struct SettingsView: View {
 
     private var videoPlayerSection: some View {
         Section(L10n.videoPlayer) {
-            #if os(iOS)
-            Picker(L10n.videoPlayerType, selection: $videoPlayerType)
-
-            ChevronButton(L10n.nativePlayer) {
-                router.route(to: .nativePlayerSettings)
-            }
-            #else
-            ListRowMenu(L10n.videoPlayerType, selection: $videoPlayerType)
-            #endif
-
             ChevronButton(L10n.videoPlayer) {
                 router.route(to: .videoPlayerSettings)
             }
@@ -130,15 +117,6 @@ struct SettingsView: View {
             ChevronButton(L10n.playbackQuality) {
                 router.route(to: .playbackQualitySettings)
             }
-        } learnMore: {
-            LabeledContent(
-                "Reefy",
-                value: L10n.playerReefyDescription
-            )
-            LabeledContent(
-                L10n.native,
-                value: L10n.playerNativeDescription
-            )
         }
     }
 

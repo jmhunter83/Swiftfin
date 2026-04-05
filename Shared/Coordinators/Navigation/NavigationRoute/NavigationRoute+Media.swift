@@ -6,7 +6,6 @@
 // Copyright (c) 2026 Jellyfin & Jellyfin Contributors
 //
 
-import Defaults
 import Factory
 import JellyfinAPI
 import PreferencesView
@@ -89,10 +88,6 @@ extension NavigationRoute {
     }
 }
 
-// TODO: shim until native vs swiftfin player is replace with vlc vs av layers
-//       - when removed, ensure same behavior with safe area
-//       - may just need to make a VC wrapper to capture them
-
 struct VideoPlayerViewShim: View {
 
     @State
@@ -101,21 +96,15 @@ struct VideoPlayerViewShim: View {
     let manager: MediaPlayerManager
 
     var body: some View {
-        Group {
-            if Defaults[.VideoPlayer.videoPlayerType] == .swiftfin {
-                VideoPlayer()
-            } else {
-                NativeVideoPlayer()
+        VideoPlayer()
+            .colorScheme(.dark) // use over `preferredColorScheme(.dark)` to not have destination change
+            .environment(\.safeAreaInsets, safeAreaInsets)
+            .supportedOrientations(.allButUpsideDown)
+            .ignoresSafeArea()
+            .persistentSystemOverlays(.hidden)
+            .toolbar(.hidden, for: .navigationBar)
+            .onSizeChanged { _, safeArea in
+                self.safeAreaInsets = safeArea.max(EdgeInsets.edgePadding)
             }
-        }
-        .colorScheme(.dark) // use over `preferredColorScheme(.dark)` to not have destination change
-        .environment(\.safeAreaInsets, safeAreaInsets)
-        .supportedOrientations(.allButUpsideDown)
-        .ignoresSafeArea()
-        .persistentSystemOverlays(.hidden)
-        .toolbar(.hidden, for: .navigationBar)
-        .onSizeChanged { _, safeArea in
-            self.safeAreaInsets = safeArea.max(EdgeInsets.edgePadding)
-        }
     }
 }

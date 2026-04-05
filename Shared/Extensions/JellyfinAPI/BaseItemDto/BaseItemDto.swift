@@ -7,7 +7,6 @@
 //
 
 import Algorithms
-import AVKit
 import Factory
 import Foundation
 import JellyfinAPI
@@ -43,35 +42,6 @@ extension BaseItemDto: LibraryIdentifiable {
 }
 
 extension BaseItemDto {
-
-    var avMetadata: [AVMetadataItem] {
-        let title: String
-        var subtitle: String? = nil
-        let description = overview
-
-        if type == .episode,
-           let seriesName = seriesName
-        {
-            title = seriesName
-            subtitle = displayTitle
-        } else {
-            title = displayTitle
-        }
-
-        return [
-            AVMetadataIdentifier.commonIdentifierTitle: title,
-            .iTunesMetadataTrackSubTitle: subtitle,
-            .commonIdentifierDescription: description,
-        ]
-            .compactMap { identifier, value in
-                let item = AVMutableMetadataItem()
-                item.identifier = identifier
-                item.value = value as? NSCopying & NSObjectProtocol
-                item.extendedLanguageTag = "und"
-
-                return item.copy() as? AVMetadataItem
-            }
-    }
 
     func nowPlayableStaticMetadata(_ image: UIImage? = nil) -> NowPlayableStaticMetadata {
 
