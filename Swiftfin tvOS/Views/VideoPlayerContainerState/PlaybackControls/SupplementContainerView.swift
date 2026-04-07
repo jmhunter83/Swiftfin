@@ -87,9 +87,6 @@ struct SupplementContainerView: View {
                 focusedSupplementID = output?.id
             }
         }
-        .onChange(of: focusedSupplementID) { _, _ in
-            if focusedSupplementID != containerState.selectedSupplement?.id {}
-        }
         .onChange(of: isTopBoundaryFocused) { _, _ in
             containerState.select(supplement: nil)
         }
@@ -100,9 +97,6 @@ struct SupplementTitleButtonStyle: PrimitiveButtonStyle {
 
     @FocusState
     private var isFocused
-
-    @State
-    private var isPressed: Bool = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -126,17 +120,12 @@ struct SupplementTitleButtonStyle: PrimitiveButtonStyle {
             .mask {
                 RoundedRectangle(cornerRadius: 27)
             }
-//            .onLongPressGesture(minimumDuration: 0.01) {} onPressingChanged: { isPressing in
-//                isPressed = isPressing
-//            }
             .scaleEffect(
                 x: isFocused ? 1.1 : 1,
                 y: isFocused ? 1.1 : 1,
                 anchor: .init(x: 0.5, y: 0.5)
             )
             .animation(.bouncy(duration: 0.4), value: isFocused)
-            .opacity(isPressed ? 0.6 : 1)
-            .animation(.linear(duration: 0.05), value: isFocused)
             .focusable()
             .focused($isFocused)
             .onChange(of: isFocused) { _, newValue in

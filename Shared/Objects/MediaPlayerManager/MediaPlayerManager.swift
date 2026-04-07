@@ -170,14 +170,6 @@ final class MediaPlayerManager: ViewModel {
 
     // MARK: init
 
-//    static let empty: MediaPlayerManager = .init()
-
-//    override private init() {
-//        self.item = .init()
-//        self.state = .stopped
-//        super.init()
-//    }
-
     init(initialState: _State = .stopped) {
         self.item = .init()
         self.state = initialState
