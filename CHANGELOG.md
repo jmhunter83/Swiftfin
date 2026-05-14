@@ -80,6 +80,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.4.0] - TestFlight
+
+**Version**: 1.4.0 (Build 1)
+
+### Added
+
+- **System Default audio output mode**: New audio output option that lets VLC use the Apple TV's audio configuration without any override. Set as the default for fresh installs (#55)
+- **Jump-to-end clamp**: Jump forward now respects remaining runtime so it never overshoots the end of an item (#49)
+- **Persist playback speed**: User-selected playback speed survives across sessions (upstream port)
+
+### Fixed
+
+- **Audio regression on AC3/AAC**: Reefy was forcing `spdif = 0` for Auto and Stereo output modes, causing silent failures on some Apple TV configurations. New System Default mode bypasses the override entirely (#55)
+- **TV section focus traversal**: Pressing Up from the top row of the TV Shows or Live TV library now returns focus to the section picker instead of getting stuck (#52)
+- **AppLoadingView migration errors**: All six hardcoded English strings now route through L10n for translation
+- **Authentication path force-unwraps**: Replaced `userSession!` and `authenticationAction!` force-unwraps with safe `requireSession()` and guard patterns across 25 files and 84 sites — no more crashes if state ever diverges
+
+### Changed
+
+- **Dependency**: TVVLCKit and MobileVLCKit pinned to 3.7.2 (was 3.7.0)
+- **Logging**: `VideoPlayerContainerState` debug prints now route through Pulse logger
+- **Stability**: `ItemEditorViewModel` abstract method stubs use `preconditionFailure` with named subclass+method, producing actionable crash reports if a subclass forgets to override
+- **Stateful protocol**: Default `backgroundStates` for conformers without background states is now a quiet no-op instead of `assertionFailure` (which was silently elided in release anyway)
+
+### Removed
+
+- **Dead code**: `Shared/Extensions/JellyfinAPI/ServerTicks.swift` (95 lines, zero callers, fully superseded by `Duration.ticks`)
+- **Cleanup pass**: Commented-out code blocks, dead AVKit/NativeVideoPlayer references, fully-commented PreferenceUIHosting files
+
+---
+
 ## Previous Releases
 
 See git history for changes prior to this changelog.
