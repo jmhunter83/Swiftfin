@@ -265,19 +265,19 @@ class ItemEditorViewModel<Element: Equatable>: ViewModel, Stateful, Eventful {
     // MARK: - Populate the Trie
 
     func populateTrie() {
-        fatalError("This method should be overridden in subclasses")
+        preconditionFailure("\(type(of: self)) must override populateTrie()")
     }
 
     // MARK: - Add Element Component to Item (To Be Overridden)
 
     func addComponents(_ components: [Element]) async throws {
-        fatalError("This method should be overridden in subclasses")
+        preconditionFailure("\(type(of: self)) must override addComponents(_:)")
     }
 
     // MARK: - Remove Element Component from Item (To Be Overridden)
 
     func removeComponents(_ components: [Element]) async throws {
-        fatalError("This method should be overridden in subclasses")
+        preconditionFailure("\(type(of: self)) must override removeComponents(_:)")
     }
 
     // MARK: - Reorder Elements (To Be Overridden)
@@ -285,13 +285,13 @@ class ItemEditorViewModel<Element: Equatable>: ViewModel, Stateful, Eventful {
     // TODO: should instead move to an index-based self insertion
     //       instead of replacement
     func reorderComponents(_ tags: [Element]) async throws {
-        fatalError("This method should be overridden in subclasses")
+        preconditionFailure("\(type(of: self)) must override reorderComponents(_:)")
     }
 
     // MARK: - Fetch All Possible Elements (To Be Overridden)
 
     func fetchElements() async throws -> [Element] {
-        fatalError("This method should be overridden in subclasses")
+        preconditionFailure("\(type(of: self)) must override fetchElements()")
     }
 
     // MARK: - Return Matching Elements (To Be Overridden)
