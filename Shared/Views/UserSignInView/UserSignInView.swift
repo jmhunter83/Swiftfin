@@ -316,11 +316,12 @@ struct UserSignInView: View {
                 let existingUserAccessPolicy = userState.accessPolicy
 
                 Button(L10n.signIn) {
+                    guard let authenticationAction else { return }
                     viewModel.saveExisting(
                         user: existingUser,
                         replaceForAccessToken: false,
                         authenticationAction: (
-                            authenticationAction!,
+                            authenticationAction,
                             existingUserAccessPolicy,
                             existingUserAccessPolicy.authenticateReason(
                                 user: userState
@@ -331,11 +332,12 @@ struct UserSignInView: View {
                 }
 
                 Button(L10n.replace) {
+                    guard let authenticationAction else { return }
                     viewModel.saveExisting(
                         user: existingUser,
                         replaceForAccessToken: true,
                         authenticationAction: (
-                            authenticationAction!,
+                            authenticationAction,
                             existingUserAccessPolicy,
                             existingUserAccessPolicy.authenticateReason(
                                 user: userState
