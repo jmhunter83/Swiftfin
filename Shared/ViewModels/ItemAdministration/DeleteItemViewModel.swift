@@ -95,8 +95,9 @@ final class DeleteItemViewModel: ViewModel, Stateful, Eventful {
             throw ErrorMessage(L10n.unknownError)
         }
 
+        let session = try requireSession()
         let request = Paths.deleteItem(itemID: itemID)
-        _ = try await userSession!.client.send(request)
+        _ = try await session.client.send(request)
 
         await MainActor.run {
             Notifications[.didDeleteItem].post(itemID)

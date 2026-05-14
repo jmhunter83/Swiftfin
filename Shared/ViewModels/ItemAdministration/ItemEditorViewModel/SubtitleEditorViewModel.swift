@@ -246,6 +246,8 @@ final class SubtitleEditorViewModel: ViewModel, Stateful, Eventful {
             throw ErrorMessage(L10n.unknownError)
         }
 
+        let session = try requireSession()
+
         // Extract non-nil indexes from mediaStreams
         let indices = mediaStreams.compactMap(\.index)
             .sorted(by: >)
@@ -256,7 +258,7 @@ final class SubtitleEditorViewModel: ViewModel, Stateful, Eventful {
         for index in indices {
             let request = Paths.deleteSubtitle(itemID: itemID, index: index)
             do {
-                _ = try await userSession!.client.send(request)
+                _ = try await session.client.send(request)
                 deletedIndices.insert(index)
             } catch {
                 throw ErrorMessage(L10n.failedDeletionAtIndexError(
@@ -274,12 +276,13 @@ final class SubtitleEditorViewModel: ViewModel, Stateful, Eventful {
             throw ErrorMessage(L10n.unknownError)
         }
 
+        let session = try requireSession()
         let request = Paths.searchRemoteSubtitles(
             itemID: itemID,
             language: language,
             isPerfectMatch: isPerfectMatch
         )
-        let results = try await userSession!.client.send(request)
+        let results = try await session.client.send(request)
 
         return results.value
     }
@@ -291,11 +294,12 @@ final class SubtitleEditorViewModel: ViewModel, Stateful, Eventful {
             throw ErrorMessage(L10n.unknownError)
         }
 
+        let session = try requireSession()
         try await withThrowingTaskGroup(of: Void.self) { group in
             for subtitleID in subtitles {
                 group.addTask {
                     let request = Paths.downloadRemoteSubtitles(itemID: itemID, subtitleID: subtitleID)
-                    _ = try await self.userSession!.client.send(request)
+                    _ = try await session.client.send(request)
                 }
             }
 
@@ -310,8 +314,9 @@ final class SubtitleEditorViewModel: ViewModel, Stateful, Eventful {
             throw ErrorMessage(L10n.unknownError)
         }
 
+        let session = try requireSession()
         let request = Paths.uploadSubtitle(itemID: itemID, subtitle)
-        _ = try await userSession!.client.send(request)
+        _ = try await session.client.send(request)
     }
 
     // MARK: - Refresh Item
@@ -323,12 +328,13 @@ final class SubtitleEditorViewModel: ViewModel, Stateful, Eventful {
             _ = backgroundStates.insert(.updating)
         }
 
+        let session = try requireSession()
         let request = Paths.getItem(
             itemID: itemID,
-            userID: userSession!.user.id
+            userID: session.user.id
         )
 
-        let response = try await userSession!.client.send(request)
+        let response = try await session.client.send(request)
 
         await MainActor.run {
             self.item = response.value

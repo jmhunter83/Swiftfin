@@ -137,27 +137,29 @@ final class ProgramsViewModel: ViewModel, Stateful {
 
     private func getRecommendedPrograms() async throws -> [BaseItemDto] {
 
+        let session = try requireSession()
         var parameters = Paths.GetRecommendedProgramsParameters()
         parameters.fields = .MinimumFields
             .appending(.channelInfo)
         parameters.isAiring = true
         parameters.limit = 20
-        parameters.userID = userSession!.user.id
+        parameters.userID = session.user.id
 
         let request = Paths.getRecommendedPrograms(parameters: parameters)
-        let response = try await userSession!.client.send(request)
+        let response = try await session.client.send(request)
 
         return response.value.items ?? []
     }
 
     private func getPrograms(for section: ProgramSection) async throws -> [BaseItemDto] {
 
+        let session = try requireSession()
         var parameters = Paths.GetLiveTvProgramsParameters()
         parameters.fields = .MinimumFields
             .appending(.channelInfo)
         parameters.hasAired = false
         parameters.limit = 20
-        parameters.userID = userSession!.user.id
+        parameters.userID = session.user.id
 
         parameters.isKids = section == .kids
         parameters.isMovie = section == .movies
@@ -166,7 +168,7 @@ final class ProgramsViewModel: ViewModel, Stateful {
         parameters.isSports = section == .sports
 
         let request = Paths.getLiveTvPrograms(parameters: parameters)
-        let response = try await userSession!.client.send(request)
+        let response = try await session.client.send(request)
 
         return response.value.items ?? []
     }

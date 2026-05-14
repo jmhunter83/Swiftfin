@@ -147,6 +147,7 @@ final class SearchViewModel: ViewModel {
 
     private func _getItems(query: String, itemType: BaseItemKind) async throws -> [BaseItemDto] {
 
+        let session = try requireSession()
         var parameters = Paths.GetItemsByUserIDParameters()
         parameters.enableUserData = true
         parameters.fields = .MinimumFields
@@ -173,7 +174,7 @@ final class SearchViewModel: ViewModel {
                 .first
         }
 
-        let request = Paths.getItemsByUserID(userID: userSession!.user.id, parameters: parameters)
+        let request = Paths.getItemsByUserID(userID: session.user.id, parameters: parameters)
 
         // Debug: Log search request start
         let startTime = CFAbsoluteTimeGetCurrent()
@@ -183,7 +184,7 @@ final class SearchViewModel: ViewModel {
         ])
 
         do {
-            let response = try await userSession!.client.send(request)
+            let response = try await session.client.send(request)
 
             // Debug: Log success with timing
             let elapsed = CFAbsoluteTimeGetCurrent() - startTime
@@ -210,12 +211,13 @@ final class SearchViewModel: ViewModel {
 
     private func _getPeople(query: String) async throws -> [BaseItemDto] {
 
+        let session = try requireSession()
         var parameters = Paths.GetPersonsParameters()
         parameters.limit = 20
         parameters.searchTerm = query
 
         let request = Paths.getPersons(parameters: parameters)
-        let response = try await userSession!.client.send(request)
+        let response = try await session.client.send(request)
 
         return response.value.items ?? []
     }
@@ -227,14 +229,15 @@ final class SearchViewModel: ViewModel {
 
         filterViewModel.send(.getQueryFilters)
 
+        let session = try requireSession()
         var parameters = Paths.GetItemsByUserIDParameters()
         parameters.includeItemTypes = [.movie, .series]
         parameters.isRecursive = true
         parameters.limit = 10
         parameters.sortBy = [ItemSortBy.random.rawValue]
 
-        let request = Paths.getItemsByUserID(userID: userSession!.user.id, parameters: parameters)
-        let response = try await userSession!.client.send(request)
+        let request = Paths.getItemsByUserID(userID: session.user.id, parameters: parameters)
+        let response = try await session.client.send(request)
 
         self.suggestions = response.value.items ?? []
     }
