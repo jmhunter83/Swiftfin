@@ -183,6 +183,11 @@ extension VLCMediaPlayerProxy {
 
             // Apply audio output mode settings
             switch Defaults[.VideoPlayer.Audio.outputMode] {
+            case .systemDefault:
+                // Set nothing — let VLC respect the system audio configuration.
+                // Required for codecs (AAC, AC3, E-AC3) that fail under forced
+                // software decode on some Apple TV configurations.
+                break
             case .auto:
                 // Disable passthrough so VLC can properly downmix surround to stereo
                 // This fixes center channel only going to left speaker on stereo setups
