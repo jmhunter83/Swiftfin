@@ -41,11 +41,12 @@ extension Stateful {
 
 extension Stateful where BackgroundState == Never {
 
+    /// Conformers with `BackgroundState == Never` have no background states.
+    /// Reads always return the empty set; writes are no-ops. This lets generic
+    /// consumers (`vm.backgroundStates.contains(...)`, etc.) work uniformly
+    /// without knowing whether the specific type defines background states.
     var backgroundStates: Set<Never> {
-        get {
-            assertionFailure("Attempted to access `backgroundStates` when there are none")
-            return []
-        }
-        set { assertionFailure("Attempted to set `backgroundStates` when there are none") }
+        get { [] }
+        set {}
     }
 }
