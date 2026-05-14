@@ -60,6 +60,7 @@ struct TVTabView: View {
                 .padding(.bottom, 30)
 
             contentView
+                .focusSection()
         }
     }
 
