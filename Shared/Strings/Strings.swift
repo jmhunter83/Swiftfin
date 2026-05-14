@@ -932,6 +932,32 @@ internal enum L10n {
   internal static let metadataRefreshDescription = L10n.tr("Localizable", "metadataRefreshDescription", fallback: "Metadata is refreshed based on settings and internet services that are enabled in Jellyfin.")
   /// Method
   internal static let method = L10n.tr("Localizable", "method", fallback: "Method")
+  /// Migration Failed
+  internal static let migrationFailed = L10n.tr("Localizable", "migrationFailed", fallback: "Migration Failed")
+  /// The app data migration failed. This may be due to corrupted data or insufficient storage.
+  internal static let migrationFailedDescription = L10n.tr(
+    "Localizable",
+    "migrationFailedDescription",
+    fallback: "The app data migration failed. This may be due to corrupted data or insufficient storage."
+  )
+  /// Restart the app to retry the migration
+  internal static let migrationRecoveryRetry = L10n.tr(
+    "Localizable",
+    "migrationRecoveryRetry",
+    fallback: "Restart the app to retry the migration"
+  )
+  /// Check available storage space
+  internal static let migrationRecoveryStorage = L10n.tr(
+    "Localizable",
+    "migrationRecoveryStorage",
+    fallback: "Check available storage space"
+  )
+  /// If the issue persists, you may need to reset app data
+  internal static let migrationRecoveryReset = L10n.tr(
+    "Localizable",
+    "migrationRecoveryReset",
+    fallback: "If the issue persists, you may need to reset app data"
+  )
   /// Minutes
   internal static let minutes = L10n.tr("Localizable", "minutes", fallback: "Minutes")
   /// Missing
@@ -1186,6 +1212,8 @@ internal enum L10n {
   internal static let recording = L10n.tr("Localizable", "recording", fallback: "Recording")
   /// Recordings
   internal static let recordings = L10n.tr("Localizable", "recordings", fallback: "Recordings")
+  /// Recovery Options:
+  internal static let recoveryOptions = L10n.tr("Localizable", "recoveryOptions", fallback: "Recovery Options:")
   /// Red
   internal static let red = L10n.tr("Localizable", "red", fallback: "Red")
   /// The number of reference frames is not supported

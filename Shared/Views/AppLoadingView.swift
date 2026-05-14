@@ -22,14 +22,12 @@ struct AppLoadingView: View {
                 .symbolRenderingMode(.monochrome)
 
             VStack(spacing: 12) {
-                // TODO: L10n - add key "migrationFailed" = "Migration Failed"
-                Text("Migration Failed")
+                Text(L10n.migrationFailed)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
 
-                // TODO: L10n - add key "migrationFailedDescription" = "The app data migration failed. This may be due to corrupted data or insufficient storage."
-                Text("The app data migration failed. This may be due to corrupted data or insufficient storage.")
+                Text(L10n.migrationFailedDescription)
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -37,18 +35,14 @@ struct AppLoadingView: View {
             }
 
             VStack(spacing: 16) {
-                // TODO: L10n - add key "recoveryOptions" = "Recovery Options:"
-                Text("Recovery Options:")
+                Text(L10n.recoveryOptions)
                     .font(.headline)
                     .foregroundStyle(.primary)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    // TODO: L10n - add key "migrationRecoveryRetry" = "Restart the app to retry the migration"
-                    Text("• Restart the app to retry the migration")
-                    // TODO: L10n - add key "migrationRecoveryStorage" = "Check available storage space"
-                    Text("• Check available storage space")
-                    // TODO: L10n - add key "migrationRecoveryReset" = "If the issue persists, you may need to reset app data"
-                    Text("• If the issue persists, you may need to reset app data")
+                    Text("• \(L10n.migrationRecoveryRetry)")
+                    Text("• \(L10n.migrationRecoveryStorage)")
+                    Text("• \(L10n.migrationRecoveryReset)")
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
