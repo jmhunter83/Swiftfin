@@ -30,12 +30,13 @@ final class SeasonItemViewModel: PagingLibraryViewModel<BaseItemDto>, Identifiab
 
         guard let parent, let seriesID = parent.id else { return [] }
 
+        let session = try requireSession()
         var parameters = Paths.GetEpisodesParameters()
         parameters.enableUserData = true
         parameters.fields = .MinimumFields
         parameters.isMissing = Defaults[.Customization.shouldShowMissingEpisodes] ? nil : false
         parameters.seasonID = seriesID
-        parameters.userID = userSession!.user.id
+        parameters.userID = session.user.id
 
 //        parameters.startIndex = page * pageSize
 //        parameters.limit = pageSize
@@ -44,7 +45,7 @@ final class SeasonItemViewModel: PagingLibraryViewModel<BaseItemDto>, Identifiab
             seriesID: seriesID,
             parameters: parameters
         )
-        let response = try await userSession!.client.send(request)
+        let response = try await session.client.send(request)
 
         return response.value.items ?? []
     }
