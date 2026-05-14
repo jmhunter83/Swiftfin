@@ -11,6 +11,7 @@ import Foundation
 /// Centralized timing constants for animations and delays throughout the app.
 /// Using named constants makes timing behavior consistent and easy to tune.
 enum AnimationTiming {
+
     // MARK: - Focus Delays
 
     /// Short delay to allow UI to settle before focus changes (0.1s)

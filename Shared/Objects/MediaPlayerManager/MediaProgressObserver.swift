@@ -133,7 +133,8 @@ class MediaProgressObserver: ViewModel, MediaPlayerObserver {
                 info.subtitleStreamIndex = item.selectedSubtitleStreamIndex
 
                 let request = Paths.reportPlaybackStart(info)
-                _ = try await userSession!.client.send(request)
+                let session = try requireSession()
+                _ = try await session.client.send(request)
 
                 self.hasSentStart = true
             } catch {
@@ -169,7 +170,8 @@ class MediaProgressObserver: ViewModel, MediaPlayerObserver {
                 info.sessionID = item.playSessionID
 
                 let request = Paths.reportPlaybackStopped(info)
-                _ = try await userSession!.client.send(request)
+                let session = try requireSession()
+                _ = try await session.client.send(request)
             } catch {
                 logger.error("Failed to send playback stop report: \(error.localizedDescription)")
             }
@@ -195,7 +197,8 @@ class MediaProgressObserver: ViewModel, MediaPlayerObserver {
                 info.subtitleStreamIndex = item.selectedSubtitleStreamIndex
 
                 let request = Paths.reportPlaybackProgress(info)
-                _ = try await userSession!.client.send(request)
+                let session = try requireSession()
+                _ = try await session.client.send(request)
             } catch {
                 // Don't log progress errors at error level - they're frequent and expected during network issues
                 logger.warning("Failed to send playback progress report: \(error.localizedDescription)")

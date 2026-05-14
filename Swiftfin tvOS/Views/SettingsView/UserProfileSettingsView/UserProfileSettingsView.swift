@@ -26,7 +26,25 @@ struct UserProfileSettingsView: View {
 
     init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
-        self._profileImageViewModel = StateObject(wrappedValue: UserProfileImageViewModel(user: viewModel.userSession!.user.data))
+        // Reachable only when signed in — view is gated by router auth state.
+        guard let user = viewModel.currentSession?.user.data else {
+            preconditionFailure("UserProfileSettingsView requires an active session")
+        }
+        self._profileImageViewModel = StateObject(wrappedValue: UserProfileImageViewModel(user: user))
+    }
+
+    @ViewBuilder
+    private var profileImage: some View {
+        if let session = viewModel.currentSession {
+            UserProfileImage(
+                userID: session.user.id,
+                source: session.user.profileImageSource(
+                    client: session.client
+                )
+            )
+            .aspectRatio(contentMode: .fit)
+            .frame(maxWidth: 400)
+        }
     }
 
     var body: some View {
@@ -48,31 +66,23 @@ struct UserProfileSettingsView: View {
 //            } footer: {
 //                Text(L10n.resetSettingsDescription)
 //            }
-        }, image: {
-            UserProfileImage(
-                userID: viewModel.userSession!.user.id,
-                source: viewModel.userSession!.user.profileImageSource(
-                    client: viewModel.userSession!.client
-                )
-            )
-            .aspectRatio(contentMode: .fit)
-            .frame(maxWidth: 400)
-        })
-        .navigationTitle(L10n.user)
-        .confirmationDialog(
-            L10n.resetSettings,
-            isPresented: $isPresentingConfirmReset,
-            titleVisibility: .visible
-        ) {
-            Button(L10n.reset, role: .destructive) {
-                do {
-                    try viewModel.userSession!.user.deleteSettings()
-                } catch {
-                    viewModel.logger.error("Unable to reset user settings: \(error.localizedDescription)")
+        }, image: { profileImage })
+            .navigationTitle(L10n.user)
+            .confirmationDialog(
+                L10n.resetSettings,
+                isPresented: $isPresentingConfirmReset,
+                titleVisibility: .visible
+            ) {
+                Button(L10n.reset, role: .destructive) {
+                    guard let session = viewModel.currentSession else { return }
+                    do {
+                        try session.user.deleteSettings()
+                    } catch {
+                        viewModel.logger.error("Unable to reset user settings: \(error.localizedDescription)")
+                    }
                 }
+            } message: {
+                Text(L10n.resetSettingsMessage)
             }
-        } message: {
-            Text(L10n.resetSettingsMessage)
-        }
     }
 }

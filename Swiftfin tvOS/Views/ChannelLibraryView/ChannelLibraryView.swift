@@ -27,7 +27,8 @@ struct ChannelLibraryView: View {
             WideChannelGridItem(channel: channel)
                 .onSelect {
                     guard channel.channel.mediaSources?.first != nil else { return }
-                    let provider = channel.channel.getPlaybackItemProvider(userSession: viewModel.userSession!)
+                    guard let session = viewModel.currentSession else { return }
+                    let provider = channel.channel.getPlaybackItemProvider(userSession: session)
                     router.route(to: .videoPlayer(provider: provider))
                 }
         }

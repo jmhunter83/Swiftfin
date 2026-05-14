@@ -88,14 +88,15 @@ class PlaybackInformationProvider: ViewModel, MediaPlayerObserver {
         playbackSessionTask?.cancel()
 
         playbackSessionTask = Task {
+            let session = try requireSession()
             let parameters = Paths.GetSessionsParameters(
-                deviceID: userSession!.client.configuration.deviceID
+                deviceID: session.client.configuration.deviceID
             )
             let request = Paths.getSessions(
                 parameters: parameters
             )
 
-            let response = try await userSession!.client.send(request)
+            let response = try await session.client.send(request)
             guard let matchingSession = response.value.first(where: {
                 $0.nowPlayingItem?.id == itemID
             }) else {
