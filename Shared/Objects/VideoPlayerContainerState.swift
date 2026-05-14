@@ -8,7 +8,10 @@
 
 import Combine
 import Foundation
+import Logging
 import SwiftUI
+
+private let logger = Logger.swiftfin()
 
 // MARK: - State Enums
 
@@ -291,7 +294,7 @@ class VideoPlayerContainerState: ObservableObject {
         isGuestSupplement = isGuest
 
         if supplement?.id == selectedSupplement?.id {
-            print("🔄 Dismissing supplement: \(selectedSupplement?.displayTitle ?? "none")")
+            logger.trace("Dismissing supplement: \(selectedSupplement?.displayTitle ?? "none")")
             selectedSupplement = nil
             supplementRecentlyDismissed = true
             // Clear the flag after a short delay to allow Menu button logic to work properly
@@ -300,7 +303,10 @@ class VideoPlayerContainerState: ObservableObject {
             }
             containerView?.presentSupplementContainer(false)
         } else {
-            print("📱 Selecting supplement: \(supplement?.displayTitle ?? "none") (was: \(selectedSupplement?.displayTitle ?? "none"))")
+            logger
+                .trace(
+                    "Selecting supplement: \(supplement?.displayTitle ?? "none") (was: \(selectedSupplement?.displayTitle ?? "none"))"
+                )
             selectedSupplement = supplement
             containerView?.presentSupplementContainer(supplement != nil)
         }
@@ -314,8 +320,8 @@ class VideoPlayerContainerState: ObservableObject {
         let oldValue = isPresentingPlaybackControls
         isPresentingPlaybackControls = overlayState == .visible
         if oldValue != isPresentingPlaybackControls {
-            print(
-                "🎮 Playback controls visibility: \(oldValue) -> \(isPresentingPlaybackControls) (overlay: \(overlayState), supplement: \(supplementState))"
+            logger.trace(
+                "Playback controls visibility: \(oldValue) -> \(isPresentingPlaybackControls) (overlay: \(overlayState), supplement: \(supplementState))"
             )
         }
     }
