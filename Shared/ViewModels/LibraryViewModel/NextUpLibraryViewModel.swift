@@ -19,14 +19,15 @@ final class NextUpLibraryViewModel: PagingLibraryViewModel<BaseItemDto> {
 
     override func get(page: Int) async throws -> [BaseItemDto] {
 
-        let parameters = parameters(for: page)
+        let session = try requireSession()
+        let parameters = parameters(for: page, session: session)
         let request = Paths.getNextUp(parameters: parameters)
-        let response = try await userSession!.client.send(request)
+        let response = try await session.client.send(request)
 
         return response.value.items ?? []
     }
 
-    private func parameters(for page: Int) -> Paths.GetNextUpParameters {
+    private func parameters(for page: Int, session: UserSession) -> Paths.GetNextUpParameters {
 
         let maxNextUp = Defaults[.Customization.Home.maxNextUp]
         var parameters = Paths.GetNextUpParameters()
@@ -38,7 +39,7 @@ final class NextUpLibraryViewModel: PagingLibraryViewModel<BaseItemDto> {
         }
         parameters.enableRewatching = Defaults[.Customization.Home.resumeNextUp]
         parameters.startIndex = page
-        parameters.userID = userSession!.user.id
+        parameters.userID = session.user.id
 
         return parameters
     }

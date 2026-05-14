@@ -13,8 +13,9 @@ import JellyfinAPI
 final class CountriesViewModel: BaseFetchViewModel<[CountryInfo]> {
 
     override func getValue() async throws -> [CountryInfo] {
+        let session = try requireSession()
         let request = Paths.getCountries
-        let response = try await userSession!.client.send(request)
+        let response = try await session.client.send(request)
 
         return response.value
     }

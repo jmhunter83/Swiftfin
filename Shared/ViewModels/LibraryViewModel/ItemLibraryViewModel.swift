@@ -19,13 +19,14 @@ final class ItemLibraryViewModel: PagingLibraryViewModel<BaseItemDto> {
 
     override func get(page: Int) async throws -> [BaseItemDto] {
 
+        let session = try requireSession()
         let parameters = itemParameters(for: page)
-        let request = Paths.getItemsByUserID(userID: userSession!.user.id, parameters: parameters)
+        let request = Paths.getItemsByUserID(userID: session.user.id, parameters: parameters)
 
         // Debug: Log request start with key params
         let startTime = CFAbsoluteTimeGetCurrent()
         let itemTypes = parameters.includeItemTypes?.map(\.rawValue).joined(separator: ", ") ?? "all"
-        let endpoint = userSession?.client.fullURL(with: request)?.path ?? "unknown"
+        let endpoint = session.client.fullURL(with: request)?.path ?? "unknown"
         logger.debug("Library request start", metadata: [
             "page": "\(page)",
             "itemTypes": "\(itemTypes)",
@@ -34,7 +35,7 @@ final class ItemLibraryViewModel: PagingLibraryViewModel<BaseItemDto> {
 
         let response: Response<BaseItemDtoQueryResult>
         do {
-            response = try await userSession!.client.send(request)
+            response = try await session.client.send(request)
         } catch {
             // Debug: Log failure with full error details
             let elapsed = CFAbsoluteTimeGetCurrent() - startTime

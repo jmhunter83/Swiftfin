@@ -27,9 +27,10 @@ final class RecentlyAddedLibraryViewModel: PagingLibraryViewModel<BaseItemDto> {
 
     override func get(page: Int) async throws -> [BaseItemDto] {
 
+        let session = try requireSession()
         let parameters = parameters(for: page)
-        let request = Paths.getItemsByUserID(userID: userSession!.user.id, parameters: parameters)
-        let response = try await userSession!.client.send(request)
+        let request = Paths.getItemsByUserID(userID: session.user.id, parameters: parameters)
+        let response = try await session.client.send(request)
 
         return response.value.items ?? []
     }

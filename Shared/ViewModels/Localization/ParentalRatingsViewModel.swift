@@ -13,8 +13,9 @@ import JellyfinAPI
 final class ParentalRatingsViewModel: BaseFetchViewModel<[ParentalRating]> {
 
     override func getValue() async throws -> [ParentalRating] {
+        let session = try requireSession()
         let request = Paths.getParentalRatings
-        let response = try await userSession!.client.send(request)
+        let response = try await session.client.send(request)
 
         return response.value
     }
