@@ -40,6 +40,7 @@ extension JellyfinClient.Configuration {
 
     static func swiftfinConfiguration(
         url: URL,
+        userID: String? = nil,
         accessToken: String? = nil
     ) -> Self {
 
@@ -49,7 +50,11 @@ extension JellyfinClient.Configuration {
             .unicodeScalars
             .filter { CharacterSet.urlQueryAllowed.contains($0) }
             .description
-        let deviceID = "\(UIDevice.platform)_\(UIDevice.vendorUUIDString)"
+        // Per-user device ID so each Jellyfin user gets a distinct (client, deviceID) pair.
+        // Without this, signing in as a second user invalidates the first user's token server-side
+        // and switching back returns 401.
+        let baseDeviceID = "\(UIDevice.platform)_\(UIDevice.vendorUUIDString)"
+        let deviceID = userID.map { "\(baseDeviceID)_\($0)" } ?? baseDeviceID
         let version = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "0.0.1"
 
         return .init(

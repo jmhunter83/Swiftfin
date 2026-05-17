@@ -29,6 +29,7 @@ final class UserSession {
         let client = JellyfinClient(
             configuration: .swiftfinConfiguration(
                 url: server.currentURL,
+                userID: user.id,
                 accessToken: user.accessToken
             ),
             sessionConfiguration: .swiftfin,

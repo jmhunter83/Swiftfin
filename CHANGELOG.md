@@ -96,6 +96,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **TV section focus traversal**: Pressing Up from the top row of the TV Shows or Live TV library now returns focus to the section picker instead of getting stuck (#52)
 - **AppLoadingView migration errors**: All six hardcoded English strings now route through L10n for translation
 - **Authentication path force-unwraps**: Replaced `userSession!` and `authenticationAction!` force-unwraps with safe `requireSession()` and guard patterns across 25 files and 84 sites — no more crashes if state ever diverges
+- **User switching returns 401 (#57)**: All users on one install were sharing a single Jellyfin `DeviceID`, so signing in as a second user invalidated the first user's token server-side. Device ID is now per-user, so each Jellyfin user gets a stable identity and tokens coexist across user switches
 
 ### Changed
 
