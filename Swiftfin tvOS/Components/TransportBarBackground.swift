@@ -16,7 +16,10 @@ struct TransportBarBackground: View {
         #if os(tvOS)
         if #available(tvOS 26.0, *) {
             // tvOS 26+ Liquid Glass effect
-            Color.clear
+            // Use a fillable shape (not Color.clear) so the glass anchors to
+            // the host view's frame instead of all available space.
+            RoundedRectangle(cornerRadius: 24)
+                .fill(.black.opacity(0.001))
                 .glassEffect(.regular, in: .rect(cornerRadius: 24))
         } else if #available(tvOS 18.0, *) {
             // tvOS 18-25 - lighter, more transparent background

@@ -145,6 +145,8 @@ extension VideoPlayer {
                         .background {
                             TransportBarBackground()
                         }
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                        .shadow(color: .black.opacity(0.4), radius: 16)
 
                     // Skip explainer label
                     Text("← → Skip: 1×=15s  2×=2min  3×=5min")
@@ -153,6 +155,7 @@ extension VideoPlayer {
                         .padding(.horizontal, 60)
                         .padding(.bottom, 20)
                 }
+                .fixedSize(horizontal: false, vertical: true)
             }
         }
 
