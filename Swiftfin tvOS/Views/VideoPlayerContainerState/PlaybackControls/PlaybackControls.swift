@@ -170,7 +170,7 @@ extension VideoPlayer {
         }
 
         var body: some View {
-            GeometryReader { geometry in
+            GeometryReader { _ in
                 ZStack {
                     // Title in top-left
                     titleOverlay
@@ -182,10 +182,9 @@ extension VideoPlayer {
                     // Side action buttons (right edge, vertically stacked)
                     SideActionButtons()
 
-                    // Transport bar in bottom 10%
+                    // Transport bar pinned to bottom
                     VStack {
                         Spacer()
-                            .frame(minHeight: geometry.size.height * 0.90)
 
                         transportBar
                             .padding(.horizontal, 40)
