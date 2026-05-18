@@ -43,6 +43,10 @@ struct ConnectToServerView: View {
             UIDevice.feedback(.warning)
             duplicateServer = server
             isPresentingDuplicateServer = true
+            // Reset VM state so the spinner stops and the form is interactive again.
+            // Without this the .connect action's .loop(.connecting) transition keeps
+            // the VM in .connecting indefinitely after the duplicate is detected.
+            viewModel.cancel()
         }
     }
 
@@ -143,11 +147,6 @@ struct ConnectToServerView: View {
                 guard error != nil else { return }
                 UIDevice.feedback(.error)
                 isURLFocused = true
-            }
-            .topBarTrailing {
-                if viewModel.state == .connecting {
-                    ProgressView()
-                }
             }
             .alert(
                 Text(L10n.server),
