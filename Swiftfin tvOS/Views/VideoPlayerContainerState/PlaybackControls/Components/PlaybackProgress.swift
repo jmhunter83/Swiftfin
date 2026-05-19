@@ -15,11 +15,13 @@ extension VideoPlayer.PlaybackControls {
         @EnvironmentObject
         private var manager: MediaPlayerManager
 
+        @State
+        private var currentSeconds: Duration = .zero
+
         private var progress: Double {
             guard let runtime = manager.item.runtime, runtime > .zero else { return 0 }
-            let current = manager.seconds.seconds
             let total = runtime.seconds
-            return current / total
+            return currentSeconds.seconds / total
         }
 
         var body: some View {
@@ -30,6 +32,7 @@ extension VideoPlayer.PlaybackControls {
                 // Timestamps
                 SplitTimeStamp()
             }
+            .assign(manager.secondsBox.$value, to: $currentSeconds)
         }
 
         private var staticProgressBar: some View {
