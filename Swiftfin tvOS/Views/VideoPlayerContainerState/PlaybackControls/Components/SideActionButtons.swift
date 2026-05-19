@@ -13,7 +13,7 @@ import VLCUI
 extension VideoPlayer.PlaybackControls {
 
     /// Right-side vertical stack containing Audio and Subtitles buttons.
-    /// Positioned at 25% from bottom, above the transport bar.
+    /// Positioned at 45% from top so it doesn't block the lower portion of the screen.
     struct SideActionButtons: View {
 
         private static let sideButtonsRightOffset: CGFloat = 150
@@ -60,7 +60,7 @@ extension VideoPlayer.PlaybackControls {
                 .shadow(color: .black.opacity(0.4), radius: 16)
                 .position(
                     x: geometry.size.width - Self.sideButtonsRightOffset,
-                    y: geometry.size.height * 0.60
+                    y: geometry.size.height * 0.45
                 )
             }
             .focusGuide(
