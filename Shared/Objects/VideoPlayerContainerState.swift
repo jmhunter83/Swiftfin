@@ -203,7 +203,7 @@ class VideoPlayerContainerState: ObservableObject {
 
     let jumpProgressObserver: JumpProgressObserver = .init()
     let scrubbedSeconds: PublishedBox<Duration> = .init(initialValue: .zero)
-    let timer: PokeIntervalTimer = .init()
+    let timer: PokeIntervalTimer
     let toastProxy: ToastProxy = .init()
 
     weak var containerView: VideoPlayer.UIVideoPlayerContainerViewController?
@@ -221,7 +221,9 @@ class VideoPlayerContainerState: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    init(timerInterval: TimeInterval = 5) {
+        self.timer = PokeIntervalTimer(defaultInterval: timerInterval)
+
         timerCancellable = timer.sink { [weak self] in
             guard let self else { return }
             guard scrubState == .idle,
@@ -287,6 +289,18 @@ class VideoPlayerContainerState: ObservableObject {
     /// Toggle overlay visibility
     func toggleOverlay() {
         setOverlayVisible(overlayState != .visible)
+    }
+
+    /// Re-arm the auto-hide timer in response to user interaction (button press or focus move).
+    /// Never shows a hidden overlay and never re-arms while scrubbing, paused, or in a supplement.
+    func userDidInteract() {
+        guard overlayState == .visible,
+              supplementState == .closed,
+              scrubState == .idle,
+              manager?.playbackRequestStatus != .paused
+        else { return }
+
+        timer.poke()
     }
 
     /// Select a supplement panel to display

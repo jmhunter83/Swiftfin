@@ -6,6 +6,7 @@
 // Copyright (c) 2026 Jellyfin & Jellyfin Contributors
 //
 
+import Combine
 @testable import Swiftfin_tvOS
 import XCTest
 
@@ -122,5 +123,86 @@ final class VideoPlayerContainerStateTests: XCTestCase {
 
         sut.toggleOverlay()
         XCTAssertEqual(sut.overlayState, .hidden)
+    }
+
+    // MARK: - Auto-Hide Timer Tests
+
+    func testOverlayHidesAfterTimerFiresWhenVisible() {
+        sut = VideoPlayerContainerState(timerInterval: 0.05)
+        sut.setOverlayVisible(true, animated: false)
+
+        let hidden = expectation(description: "overlay hides after timer fires")
+        let cancellable = sut.$overlayState.sink { state in
+            if state == .hidden {
+                hidden.fulfill()
+            }
+        }
+
+        wait(for: [hidden], timeout: 1)
+        cancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .hidden)
+    }
+
+    func testUserDidInteractRearmsTimerWhenVisible() {
+        sut = VideoPlayerContainerState(timerInterval: 0.05)
+        sut.setOverlayVisible(true, animated: false)
+        sut.userDidInteract()
+
+        let fired = expectation(description: "timer fires after interaction")
+        let cancellable = sut.timer.sink {
+            fired.fulfill()
+        }
+
+        wait(for: [fired], timeout: 1)
+        cancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .hidden)
+    }
+
+    func testUserDidInteractDoesNotShowHiddenOverlay() {
+        sut = VideoPlayerContainerState(timerInterval: 0.05)
+        sut.userDidInteract()
+
+        let fired = expectation(description: "timer does not fire")
+        fired.isInverted = true
+        let cancellable = sut.timer.sink {
+            fired.fulfill()
+        }
+
+        wait(for: [fired], timeout: 0.3)
+        cancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .hidden)
+    }
+
+    func testUserDidInteractIgnoredWhenGestureLocked() {
+        sut = VideoPlayerContainerState(timerInterval: 0.05)
+        sut.isGestureLocked = true
+        sut.userDidInteract()
+
+        let fired = expectation(description: "timer does not fire")
+        fired.isInverted = true
+        let cancellable = sut.timer.sink {
+            fired.fulfill()
+        }
+
+        wait(for: [fired], timeout: 0.3)
+        cancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .locked)
+    }
+
+    func testUserDidInteractIgnoredWhileScrubbing() {
+        sut = VideoPlayerContainerState(timerInterval: 0.05)
+        sut.setOverlayVisible(true, animated: false)
+        sut.isScrubbing = true
+        sut.userDidInteract()
+
+        let fired = expectation(description: "timer does not fire")
+        fired.isInverted = true
+        let cancellable = sut.timer.sink {
+            fired.fulfill()
+        }
+
+        wait(for: [fired], timeout: 0.3)
+        cancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .visible)
     }
 }

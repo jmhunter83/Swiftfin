@@ -236,9 +236,6 @@ extension VideoPlayer {
                 .store(in: &cancellables)
         }
 
-        /// Request a focus update only when the view is still in the hierarchy.
-        /// Guards against triggering UIKit's motion-effect applicator while views
-        /// are being torn down, which can crash on tvOS 26.2 (FB: rdar://…).
         private func requestFocusUpdateIfSafe() {
             guard isViewLoaded, view.window != nil else { return }
             setNeedsFocusUpdate()
@@ -337,6 +334,13 @@ extension VideoPlayer {
         @objc
         func ignorePress() {}
 
+        /// Touch-surface swipes move focus without generating UIPress events,
+        /// so this is the only place they can re-arm the auto-hide timer
+        override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
+            super.didUpdateFocus(in: context, with: coordinator)
+            containerState.userDidInteract()
+        }
+
         override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
             guard let buttonPress = presses.first else {
                 super.pressesBegan(presses, with: event)
@@ -345,6 +349,10 @@ extension VideoPlayer {
 
             // Send event to SwiftUI for overlay toggle handling
             onPressEvent.send((type: buttonPress.type, phase: .began))
+
+            if buttonPress.type != .menu {
+                containerState.userDidInteract()
+            }
 
             // For Menu button: swallow press when overlay/supplement is visible
             if buttonPress.type == .menu,
