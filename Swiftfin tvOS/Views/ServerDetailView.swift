@@ -18,6 +18,8 @@ struct EditServerView: View {
     private var isEditing
 
     @State
+    private var error: Error?
+    @State
     private var isPresentingConfirmDeletion: Bool = false
 
     @StateObject
@@ -92,11 +94,16 @@ struct EditServerView: View {
         .navigationTitle(L10n.server)
         .alert(L10n.deleteServer, isPresented: $isPresentingConfirmDeletion) {
             Button(L10n.delete, role: .destructive) {
-                viewModel.delete()
-//                    router.popLast()
+                do {
+                    try viewModel.delete()
+                    router.dismiss()
+                } catch {
+                    self.error = error
+                }
             }
         } message: {
             Text(L10n.confirmDeleteServerAndUsers(viewModel.server.name))
         }
+        .errorMessage($error)
     }
 }
