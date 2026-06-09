@@ -379,16 +379,20 @@ class VideoPlayerContainerState: ObservableObject {
             manager?.proxy?.setSeconds(scrubbedTime)
         }
 
-        // Auto-hide indicator after delay with cancellation support
+        scheduleSkipIndicatorAutoHide()
+
+        arrowPressStartTime = nil
+        currentScrubDirection = nil
+    }
+
+    /// Auto-hide the skip indicator after a delay with cancellation support
+    private func scheduleSkipIndicatorAutoHide() {
         let currentID = UUID()
         skipIndicatorID = currentID
         DispatchQueue.main.asyncAfter(deadline: .now() + AnimationTiming.skipIndicatorAutoHideDelay) { [weak self] in
             guard let self, self.skipIndicatorID == currentID else { return }
             self.skipIndicatorText = nil
         }
-
-        arrowPressStartTime = nil
-        currentScrubDirection = nil
     }
 
     /// Cleans up all scrubbing timers. Call when view disappears.
@@ -411,6 +415,70 @@ class VideoPlayerContainerState: ObservableObject {
     /// Whether a scrub in the given direction is currently active
     func isScrubbing(direction: ScrubDirection) -> Bool {
         currentScrubDirection == direction
+    }
+
+    // MARK: - Pan-to-Scrub
+
+    /// Touch-surface pan scrubbing is only available while the overlay is
+    /// hidden, where horizontal swipes don't conflict with focus navigation
+    var canPanScrub: Bool {
+        overlayState == .hidden &&
+            supplementState == .closed &&
+            scrubState == .idle &&
+            manager?.state == .playback &&
+            (manager?.item.runtime ?? .zero) > .zero
+    }
+
+    /// Whether the current scrub was started by a touch-surface pan (vs arrow hold)
+    private var isPanScrubbing: Bool = false
+
+    func beginPanScrub() {
+        guard canPanScrub, let manager else { return }
+
+        isPanScrubbing = true
+        isScrubbing = true
+        scrubbedSeconds.value = manager.seconds
+    }
+
+    func updatePanScrub(translationX: CGFloat, viewWidth: CGFloat) {
+        guard isPanScrubbing, scrubState == .scrubbing,
+              let runtime = manager?.item.runtime, runtime > .zero,
+              viewWidth > 0
+        else { return }
+
+        let total = runtime.seconds
+
+        // Damped so a full-width swipe moves a fraction of the runtime,
+        // with longer content damped harder
+        let damping = max(5.0, min(15.0, total / 600))
+        let delta = Double(translationX) / damping / Double(viewWidth) * total
+        let newSeconds = max(0, min(total, scrubbedSeconds.value.seconds + delta))
+
+        scrubbedSeconds.value = .seconds(newSeconds)
+
+        let current = manager?.seconds.seconds ?? 0
+        let sign = newSeconds >= current ? "+" : "−"
+        skipIndicatorText = "\(sign)\(formatDuration(abs(newSeconds - current)))"
+    }
+
+    func endPanScrub() {
+        guard isPanScrubbing, scrubState == .scrubbing else { return }
+
+        isPanScrubbing = false
+        isScrubbing = false
+        manager?.proxy?.setSeconds(scrubbedSeconds.value)
+        scheduleSkipIndicatorAutoHide()
+    }
+
+    func cancelPanScrub() {
+        guard isPanScrubbing, scrubState == .scrubbing else { return }
+
+        // Revert before ending the scrub so the seek-on-scrub-end
+        // observer sees no position delta and skips the commit
+        scrubbedSeconds.value = manager?.seconds ?? .zero
+        isPanScrubbing = false
+        isScrubbing = false
+        skipIndicatorText = nil
     }
 
     private func startAcceleratedScrubbing(direction: ScrubDirection, baseSkipAmount: Duration) {

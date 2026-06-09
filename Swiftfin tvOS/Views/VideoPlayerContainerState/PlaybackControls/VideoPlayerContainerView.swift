@@ -208,6 +208,35 @@ extension VideoPlayer {
             let gesture = UITapGestureRecognizer(target: self, action: #selector(ignorePress))
             gesture.allowedPressTypes = [NSNumber(value: UIPress.PressType.menu.rawValue)]
             view.addGestureRecognizer(gesture)
+
+            let panScrubGesture = DirectionalPanGestureRecognizer(
+                direction: .horizontal,
+                target: self,
+                action: #selector(handlePanScrub)
+            )
+            panScrubGesture.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.indirect.rawValue)]
+            panScrubGesture.cancelsTouchesInView = false
+            panScrubGesture.delegate = self
+            view.addGestureRecognizer(panScrubGesture)
+        }
+
+        @objc
+        private func handlePanScrub(_ gesture: UIPanGestureRecognizer) {
+            switch gesture.state {
+            case .began:
+                containerState.beginPanScrub()
+            case .changed:
+                containerState.updatePanScrub(
+                    translationX: gesture.translation(in: view).x,
+                    viewWidth: view.bounds.width
+                )
+                gesture.setTranslation(.zero, in: view)
+            case .ended:
+                containerState.endPanScrub()
+            case .cancelled, .failed:
+                containerState.cancelPanScrub()
+            default: ()
+            }
         }
 
         override func viewDidDisappear(_ animated: Bool) {
@@ -410,6 +439,21 @@ extension VideoPlayer.UIVideoPlayerContainerViewController {
 
     typealias PressEvent = (type: UIPress.PressType, phase: UIPress.Phase)
     typealias OnPressEvent = LegacyEventPublisher<PressEvent>
+}
+
+extension VideoPlayer.UIVideoPlayerContainerViewController: UIGestureRecognizerDelegate {
+
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard gestureRecognizer is DirectionalPanGestureRecognizer else { return true }
+        return containerState.canPanScrub
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        true
+    }
 }
 
 @propertyWrapper

@@ -241,6 +241,9 @@ extension VideoPlayer {
                     } else if containerState.supplementRecentlyDismissed {
                         // Supplement was just dismissed - clear flag but keep overlay visible
                         containerState.supplementRecentlyDismissed = false
+                    } else if isScrubbing, !isPresentingOverlay {
+                        // Menu during a touch-surface scrub cancels it instead of exiting
+                        containerState.cancelPanScrub()
                     } else if isPresentingOverlay {
                         // First menu press hides overlay
                         withAnimation(.linear(duration: 0.25)) {

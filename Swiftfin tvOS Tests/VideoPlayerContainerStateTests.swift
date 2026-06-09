@@ -189,6 +189,43 @@ final class VideoPlayerContainerStateTests: XCTestCase {
         XCTAssertEqual(sut.overlayState, .locked)
     }
 
+    // MARK: - Pan-to-Scrub Tests
+
+    func testCanPanScrubFalseWithoutManager() {
+        XCTAssertFalse(sut.canPanScrub)
+    }
+
+    func testCanPanScrubFalseWhenOverlayVisible() {
+        sut.setOverlayVisible(true, animated: false)
+
+        XCTAssertFalse(sut.canPanScrub)
+    }
+
+    func testBeginPanScrubNoOpsWhenUnavailable() {
+        sut.beginPanScrub()
+
+        XCTAssertEqual(sut.scrubState, .idle)
+    }
+
+    func testUpdatePanScrubNoOpsWhenIdle() {
+        sut.updatePanScrub(translationX: 100, viewWidth: 1920)
+
+        XCTAssertEqual(sut.scrubbedSeconds.value, .zero)
+        XCTAssertNil(sut.skipIndicatorText)
+    }
+
+    func testPanScrubHandlersIgnoreHoldScrub() {
+        // A scrub started by arrow hold must not be ended or cancelled
+        // by stray pan gesture callbacks
+        sut.isScrubbing = true
+
+        sut.endPanScrub()
+        XCTAssertEqual(sut.scrubState, .scrubbing)
+
+        sut.cancelPanScrub()
+        XCTAssertEqual(sut.scrubState, .scrubbing)
+    }
+
     func testUserDidInteractIgnoredWhileScrubbing() {
         sut = VideoPlayerContainerState(timerInterval: 0.05)
         sut.setOverlayVisible(true, animated: false)
