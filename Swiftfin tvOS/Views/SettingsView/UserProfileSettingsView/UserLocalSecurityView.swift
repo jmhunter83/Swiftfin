@@ -71,6 +71,7 @@ struct UserLocalSecurityView: View {
         do {
             try viewModel.checkForOldPolicy()
         } catch {
+            present(error)
             return
         }
 
@@ -83,10 +84,15 @@ struct UserLocalSecurityView: View {
         do {
             try viewModel.checkFor(newPolicy: signInPolicy)
         } catch {
+            present(error)
             return
         }
 
         viewModel.set(newPolicy: signInPolicy, newPin: pin, newPinHint: pinHint)
+    }
+
+    private func present(_ error: Error) {
+        self.error = (error as? ErrorMessage) ?? ErrorMessage(error.localizedDescription)
     }
 
     // MARK: - Event Handler
@@ -97,10 +103,13 @@ struct UserLocalSecurityView: View {
             error = eventError
         case .promptForOldPin:
             onPinCompletion = {
-                Task {
-                    try viewModel.check(oldPin: pin)
-
-                    checkNewPolicy()
+                Task { @MainActor in
+                    do {
+                        try viewModel.check(oldPin: pin)
+                        checkNewPolicy()
+                    } catch {
+                        present(error)
+                    }
                 }
             }
 
@@ -122,6 +131,15 @@ struct UserLocalSecurityView: View {
     // MARK: - Body
 
     var body: some View {
+        if let session = viewModel.currentSession {
+            securityForm(session: session)
+        } else {
+            ErrorView(error: ErrorMessage(L10n.unauthorizedUser))
+                .navigationTitle(L10n.security)
+        }
+    }
+
+    private func securityForm(session: UserSession) -> some View {
         Form(content: {
             Section {
                 Toggle(
@@ -160,9 +178,8 @@ struct UserLocalSecurityView: View {
         .animation(.linear, value: signInPolicy)
         .navigationTitle(L10n.security)
         .onFirstAppear {
-            guard let user = viewModel.currentSession?.user else { return }
-            pinHint = user.pinHint
-            signInPolicy = user.accessPolicy
+            pinHint = session.user.pinHint
+            signInPolicy = session.user.accessPolicy
         }
         .onReceive(viewModel.events) { event in
             onReceive(event)
@@ -172,7 +189,7 @@ struct UserLocalSecurityView: View {
                 checkOldPolicy()
             } label: {
                 Group {
-                    if signInPolicy == .requirePin, signInPolicy == viewModel.currentSession?.user.accessPolicy {
+                    if signInPolicy == .requirePin, signInPolicy == session.user.accessPolicy {
                         Text(L10n.changePin)
                     } else {
                         Text(L10n.save)
@@ -204,7 +221,7 @@ struct UserLocalSecurityView: View {
 
             Button(L10n.cancel, role: .cancel) {}
         } message: { _ in
-            Text(L10n.enterPinForUser(viewModel.currentSession?.user.username ?? ""))
+            Text(L10n.enterPinForUser(session.user.username))
         }
         .alert(
             L10n.setPin,
@@ -221,7 +238,7 @@ struct UserLocalSecurityView: View {
 
             Button(L10n.cancel, role: .cancel) {}
         } message: { _ in
-            Text(L10n.createPinForUser(viewModel.currentSession?.user.username ?? ""))
+            Text(L10n.createPinForUser(session.user.username))
         }
         .errorMessage($error)
     }

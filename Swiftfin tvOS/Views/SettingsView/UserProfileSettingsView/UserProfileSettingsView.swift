@@ -6,9 +6,6 @@
 // Copyright (c) 2026 Jellyfin & Jellyfin Contributors
 //
 
-import Defaults
-import Factory
-import JellyfinAPI
 import SwiftUI
 
 struct UserProfileSettingsView: View {
@@ -18,36 +15,35 @@ struct UserProfileSettingsView: View {
 
     @ObservedObject
     private var viewModel: SettingsViewModel
-    @StateObject
-    private var profileImageViewModel: UserProfileImageViewModel
 
     @State
     private var isPresentingConfirmReset: Bool = false
 
     init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
-        // Reachable only when signed in — view is gated by router auth state.
-        guard let user = viewModel.currentSession?.user.data else {
-            preconditionFailure("UserProfileSettingsView requires an active session")
-        }
-        self._profileImageViewModel = StateObject(wrappedValue: UserProfileImageViewModel(user: user))
     }
 
-    @ViewBuilder
-    private var profileImage: some View {
-        if let session = viewModel.currentSession {
-            UserProfileImage(
-                userID: session.user.id,
-                source: session.user.profileImageSource(
-                    client: session.client
-                )
+    private func profileImage(for session: UserSession) -> some View {
+        UserProfileImage(
+            userID: session.user.id,
+            source: session.user.profileImageSource(
+                client: session.client
             )
-            .aspectRatio(contentMode: .fit)
-            .frame(maxWidth: 400)
-        }
+        )
+        .aspectRatio(contentMode: .fit)
+        .frame(maxWidth: 400)
     }
 
     var body: some View {
+        if let session = viewModel.currentSession {
+            content(for: session)
+        } else {
+            ErrorView(error: ErrorMessage(L10n.unauthorizedUser))
+                .navigationTitle(L10n.user)
+        }
+    }
+
+    private func content(for session: UserSession) -> some View {
         Form(content: {
             Section {
                 ChevronButton(L10n.security) {
@@ -66,7 +62,7 @@ struct UserProfileSettingsView: View {
 //            } footer: {
 //                Text(L10n.resetSettingsDescription)
 //            }
-        }, image: { profileImage })
+        }, image: { profileImage(for: session) })
             .navigationTitle(L10n.user)
             .confirmationDialog(
                 L10n.resetSettings,
