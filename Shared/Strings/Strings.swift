@@ -935,29 +935,13 @@ internal enum L10n {
   /// Migration Failed
   internal static let migrationFailed = L10n.tr("Localizable", "migrationFailed", fallback: "Migration Failed")
   /// The app data migration failed. This may be due to corrupted data or insufficient storage.
-  internal static let migrationFailedDescription = L10n.tr(
-    "Localizable",
-    "migrationFailedDescription",
-    fallback: "The app data migration failed. This may be due to corrupted data or insufficient storage."
-  )
-  /// Restart the app to retry the migration
-  internal static let migrationRecoveryRetry = L10n.tr(
-    "Localizable",
-    "migrationRecoveryRetry",
-    fallback: "Restart the app to retry the migration"
-  )
-  /// Check available storage space
-  internal static let migrationRecoveryStorage = L10n.tr(
-    "Localizable",
-    "migrationRecoveryStorage",
-    fallback: "Check available storage space"
-  )
+  internal static let migrationFailedDescription = L10n.tr("Localizable", "migrationFailedDescription", fallback: "The app data migration failed. This may be due to corrupted data or insufficient storage.")
   /// If the issue persists, you may need to reset app data
-  internal static let migrationRecoveryReset = L10n.tr(
-    "Localizable",
-    "migrationRecoveryReset",
-    fallback: "If the issue persists, you may need to reset app data"
-  )
+  internal static let migrationRecoveryReset = L10n.tr("Localizable", "migrationRecoveryReset", fallback: "If the issue persists, you may need to reset app data")
+  /// Restart the app to retry the migration
+  internal static let migrationRecoveryRetry = L10n.tr("Localizable", "migrationRecoveryRetry", fallback: "Restart the app to retry the migration")
+  /// Check available storage space
+  internal static let migrationRecoveryStorage = L10n.tr("Localizable", "migrationRecoveryStorage", fallback: "Check available storage space")
   /// Minutes
   internal static let minutes = L10n.tr("Localizable", "minutes", fallback: "Minutes")
   /// Missing
