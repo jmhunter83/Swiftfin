@@ -55,8 +55,9 @@ final class PeopleEditorViewModel: ItemEditorViewModel<BaseItemPerson> {
     // MARK: - Fetch All Possible People
 
     override func fetchElements() async throws -> [BaseItemPerson] {
+        let session = try requireSession()
         let request = Paths.getPersons()
-        let response = try await userSession.client.send(request)
+        let response = try await session.client.send(request)
 
         if let people = response.value.items {
             return people.map { person in

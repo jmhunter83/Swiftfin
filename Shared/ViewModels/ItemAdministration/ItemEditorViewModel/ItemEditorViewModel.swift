@@ -231,8 +231,9 @@ class ItemEditorViewModel<Element: Equatable>: ViewModel, Stateful, Eventful {
     func updateItem(_ newItem: BaseItemDto) async throws {
         guard let itemId = item.id else { return }
 
+        let session = try requireSession()
         let request = Paths.updateItem(itemID: itemId, newItem)
-        _ = try await userSession.client.send(request)
+        _ = try await session.client.send(request)
 
         try await refreshItem()
 
@@ -250,11 +251,12 @@ class ItemEditorViewModel<Element: Equatable>: ViewModel, Stateful, Eventful {
             _ = self.backgroundStates.insert(.refreshing)
         }
 
+        let session = try requireSession()
         let request = Paths.getItem(
             itemID: itemId,
-            userID: userSession.user.id
+            userID: session.user.id
         )
-        let response = try await userSession.client.send(request)
+        let response = try await session.client.send(request)
 
         await MainActor.run {
             self.item = response.value

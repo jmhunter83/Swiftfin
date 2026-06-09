@@ -48,14 +48,14 @@ final class TagEditorViewModel: ItemEditorViewModel<String> {
     // MARK: - Fetch All Possible Tags
 
     override func fetchElements() async throws -> [String] {
-        let parameters = Paths.GetQueryFiltersLegacyParameters(userID: userSession.user.id)
+        let session = try requireSession()
+        let parameters = Paths.GetQueryFiltersLegacyParameters(userID: session.user.id)
         let request = Paths.getQueryFiltersLegacy(parameters: parameters)
-        guard let userSession = currentSession else { return [] }
 
         let response: JellyfinAPI.Response<JellyfinAPI.BaseItemDtoQueryResult>
 
         do {
-            response = try await userSession.client.send(request)
+            response = try await session.client.send(request)
         } catch {
             logger.warning("Failed to search for tags: \(error.localizedDescription)")
             return []

@@ -55,8 +55,9 @@ final class StudioEditorViewModel: ItemEditorViewModel<NameGuidPair> {
     // MARK: - Fetch All Possible Studios
 
     override func fetchElements() async throws -> [NameGuidPair] {
+        let session = try requireSession()
         let request = Paths.getStudios()
-        let response = try await userSession.client.send(request)
+        let response = try await session.client.send(request)
 
         if let studios = response.value.items {
             return studios.map { studio in

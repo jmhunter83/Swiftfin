@@ -48,8 +48,9 @@ final class GenreEditorViewModel: ItemEditorViewModel<String> {
     // MARK: - Fetch All Possible Genres
 
     override func fetchElements() async throws -> [String] {
+        let session = try requireSession()
         let request = Paths.getGenres()
-        let response = try await userSession.client.send(request)
+        let response = try await session.client.send(request)
 
         if let genres = response.value.items {
             return genres.compactMap(\.name).compactMap { $0 }
