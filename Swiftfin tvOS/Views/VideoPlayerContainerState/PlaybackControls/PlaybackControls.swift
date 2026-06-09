@@ -223,7 +223,7 @@ extension VideoPlayer {
                             containerState.isPresentingOverlay = true
                         }
                     } else {
-                        containerState.timer.poke()
+                        containerState.userDidInteract()
                     }
                     manager.togglePlayPause()
 
@@ -263,7 +263,7 @@ extension VideoPlayer {
                             containerState.isPresentingOverlay = true
                         }
                     } else {
-                        containerState.timer.poke()
+                        containerState.userDidInteract()
                     }
                 }
             }
@@ -282,7 +282,7 @@ extension VideoPlayer {
                     containerState.isPresentingOverlay = true
                 }
             }
-            containerState.timer.poke()
+            containerState.userDidInteract()
 
             switch direction {
             case .forward:
