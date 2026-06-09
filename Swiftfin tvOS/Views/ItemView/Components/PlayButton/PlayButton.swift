@@ -20,12 +20,21 @@ extension ItemView {
         @ObservedObject
         var viewModel: ItemViewModel
 
+        @State
+        private var selectedSubtitleStreamIndex: Int? = nil
+
         private let logger = Logger.swiftfin()
 
         // MARK: - Media Sources
 
         private var mediaSources: [MediaSourceInfo] {
             viewModel.playButtonItem?.mediaSources ?? []
+        }
+
+        // MARK: - Subtitle Streams
+
+        private var subtitleStreams: [MediaStream] {
+            viewModel.selectedMediaSource?.mediaStreams?.filter { $0.type == .subtitle } ?? []
         }
 
         // MARK: - Multiple Media Sources
@@ -88,12 +97,23 @@ extension ItemView {
                         .frame(width: 100, height: 100)
                 }
 
+                if subtitleStreams.isNotEmpty {
+                    SubtitleMenu(
+                        selectedSubtitleStreamIndex: $selectedSubtitleStreamIndex,
+                        subtitleStreams: subtitleStreams
+                    )
+                    .frame(width: 100, height: 100)
+                }
+
                 if hasProgress {
                     startFromBeginningButton
                 }
             }
             .frame(height: 100)
             .fontWeight(.semibold)
+            .onChange(of: viewModel.selectedMediaSource) {
+                selectedSubtitleStreamIndex = nil
+            }
         }
 
         // MARK: - Play Button
@@ -170,10 +190,12 @@ extension ItemView {
                 return nil
             }()
 
+            let subtitleStreamIndex = selectedSubtitleStreamIndex
             let provider = MediaPlayerItemProvider(item: playButtonItem) { item in
                 try await MediaPlayerItem.build(
                     for: item,
-                    mediaSource: selectedMediaSource
+                    mediaSource: selectedMediaSource,
+                    selectedSubtitleStreamIndex: subtitleStreamIndex
                 ) {
                     if fromBeginning {
                         $0.userData?.playbackPositionTicks = 0

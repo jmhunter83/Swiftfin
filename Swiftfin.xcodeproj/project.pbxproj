@@ -56,6 +56,7 @@
 		E1B5F7AD29577BDD004B26CF /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = E1B5F7AC29577BDD004B26CF /* OrderedCollections */; };
 		E1E2D7BF2E3FD936004E2E5F /* Transmission in Frameworks */ = {isa = PBXBuildFile; productRef = E1E2D7BE2E3FD936004E2E5F /* Transmission */; };
 		EE9A94A7172E4DA099EED926 /* MediaPlayerItemAudioSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */; };
+		FF694D22CA58029985D11FE0 /* MediaPlayerItemSubtitleSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4712E53657E4461A171B8ABB /* MediaPlayerItemSubtitleSelectionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -140,6 +141,7 @@
 		B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MediaErrorTests.swift; sourceTree = "<group>"; };
 		E1B2AB9628808CDF0072B3B9 /* GoogleCast.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = GoogleCast.xcframework; path = Carthage/Build/GoogleCast.xcframework; sourceTree = "<group>"; };
 		E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MediaPlayerItemAudioSelectionTests.swift; sourceTree = "<group>"; };
+		4712E53657E4461A171B8ABB /* MediaPlayerItemSubtitleSelectionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MediaPlayerItemSubtitleSelectionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -355,6 +357,7 @@
 				1279A92061D12F3D7D8B6C9E /* NetworkErrorTests.swift */,
 				B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */,
 				E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */,
+				4712E53657E4461A171B8ABB /* MediaPlayerItemSubtitleSelectionTests.swift */,
 			);
 			path = "Swiftfin tvOS Tests";
 			sourceTree = "<group>";
@@ -642,6 +645,7 @@
 				B6FD5626C1D953D86DA73199 /* NetworkErrorTests.swift in Sources */,
 				6C6178530A261AC4FD50E4DC /* MediaErrorTests.swift in Sources */,
 				EE9A94A7172E4DA099EED926 /* MediaPlayerItemAudioSelectionTests.swift in Sources */,
+				FF694D22CA58029985D11FE0 /* MediaPlayerItemSubtitleSelectionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -24,6 +24,7 @@ extension MediaPlayerItem {
         videoPlayerType: VideoPlayerType = Defaults[.VideoPlayer.videoPlayerType],
         requestedBitrate: PlaybackBitrate = Defaults[.VideoPlayer.Playback.appMaximumBitrate],
         compatibilityMode: PlaybackCompatibility = Defaults[.VideoPlayer.Playback.compatibilityMode],
+        selectedSubtitleStreamIndex: Int? = nil,
         modifyItem: ((inout BaseItemDto) -> Void)? = nil
     ) async throws -> MediaPlayerItem {
 
@@ -162,6 +163,7 @@ extension MediaPlayerItem {
             playSessionID: playSessionID,
             url: playbackURL,
             requestedBitrate: requestedBitrate,
+            preferredSubtitleStreamIndex: selectedSubtitleStreamIndex,
             previewImageProvider: previewImageProvider,
             thumbnailProvider: item.getNowPlayingImage
         )

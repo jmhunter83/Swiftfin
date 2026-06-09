@@ -84,6 +84,7 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
         playSessionID: String,
         url: URL,
         requestedBitrate: PlaybackBitrate = .max,
+        preferredSubtitleStreamIndex: Int? = nil,
         previewImageProvider: (any PreviewImageProvider)? = nil,
         thumbnailProvider: ThumbnailProvider? = nil
     ) {
@@ -124,12 +125,36 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
             selectedAudioStreamIndex = audioStreams.first?.index
         }
 
-        selectedSubtitleStreamIndex = mediaSource.defaultSubtitleStreamIndex ?? -1
+        selectedSubtitleStreamIndex = Self.initialSubtitleStreamIndex(
+            preferred: preferredSubtitleStreamIndex,
+            mediaSource: mediaSource,
+            adjustedSubtitleStreams: subtitleStreams
+        )
 
         observers.append(MediaProgressObserver(item: self))
     }
 
     deinit {
         observers.removeAll()
+    }
+
+    /// Resolves the initial subtitle track. `preferred` is in the original server index
+    /// space; tracks are renumbered by `adjustedTrackIndexes`, so map by position within
+    /// the subtitle list, which is order-preserving.
+    static func initialSubtitleStreamIndex(
+        preferred: Int?,
+        mediaSource: MediaSourceInfo,
+        adjustedSubtitleStreams: [MediaStream]
+    ) -> Int {
+        guard let preferred else { return mediaSource.defaultSubtitleStreamIndex ?? -1 }
+        guard preferred != -1 else { return -1 }
+
+        let originalSubtitles = (mediaSource.mediaStreams ?? []).filter { $0.type == .subtitle }
+
+        guard let position = originalSubtitles.firstIndex(where: { $0.index == preferred }),
+              position < adjustedSubtitleStreams.count
+        else { return mediaSource.defaultSubtitleStreamIndex ?? -1 }
+
+        return adjustedSubtitleStreams[position].index ?? -1
     }
 }
