@@ -109,14 +109,14 @@ struct SelectUserView: View {
     // MARK: - Select User(s)
 
     private func select(user: UserState, needsPin: Bool = true) {
-        selectedUsers.insert(user)
-
         switch user.accessPolicy {
         case .requireDeviceAuthentication:
             // Do nothing, no device authentication on tvOS
             break
         case .requirePin:
             if needsPin {
+                // PIN alert reads the user back via selectedUsers.first
+                selectedUsers.insert(user)
                 isPresentingLocalPin = true
                 return
             }
@@ -149,8 +149,7 @@ struct SelectUserView: View {
                     select(user: user)
                 }
             } onDelete: {
-                selectedUsers.insert(user)
-                isPresentingConfirmDeleteUsers = true
+                delete(user: user)
             }
             .isSelected(selectedUsers.contains(user))
         }
@@ -297,6 +296,12 @@ struct SelectUserView: View {
                 selectedUsers.removeAll()
             }
         }
+        .onChange(of: isPresentingConfirmDeleteUsers) {
+            // Clear the user inserted by a context menu delete that was
+            // cancelled; keep selections when cancelling in edit mode
+            guard !isPresentingConfirmDeleteUsers, !isEditingUsers else { return }
+            selectedUsers.removeAll()
+        }
         .onChange(of: viewModel.servers.keys) {
             let newValue = viewModel.servers.keys
 
@@ -318,6 +323,7 @@ struct SelectUserView: View {
             case let .signedIn(user):
                 Defaults[.lastSignedInUserID] = .signedIn(userID: user.id)
                 Container.shared.currentUserSession.reset()
+                selectedUsers.removeAll()
                 Notifications[.didSignIn].post()
             }
         }
@@ -337,6 +343,8 @@ struct SelectUserView: View {
         ) {
             Button(L10n.delete, role: .destructive) {
                 viewModel.deleteUsers(selectedUsers)
+                isEditingUsers = false
+                selectedUsers.removeAll()
             }
         } message: {
             if selectedUsers.count == 1, let first = selectedUsers.first {
