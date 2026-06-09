@@ -18,6 +18,8 @@ extension AppSettingsView {
 
         @Default(.backgroundSignOutInterval)
         private var backgroundSignOutInterval
+        @Default(.selectUserOnLaunch)
+        private var selectUserOnLaunch
         @Default(.signOutOnBackground)
         private var signOutOnBackground
         @Default(.signOutOnClose)
@@ -27,6 +29,12 @@ extension AppSettingsView {
         private var isEditingBackgroundSignOutInterval: Bool = false
 
         var body: some View {
+            Section {
+                Toggle(L10n.selectUserOnLaunch, isOn: $selectUserOnLaunch)
+            } footer: {
+                Text(L10n.selectUserOnLaunchFooter)
+            }
+
             Section {
                 Toggle(L10n.signoutClose, isOn: $signOutOnClose)
             } footer: {

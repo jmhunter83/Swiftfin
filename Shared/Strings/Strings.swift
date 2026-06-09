@@ -1338,6 +1338,10 @@ internal enum L10n {
   internal static let selectImage = L10n.tr("Localizable", "selectImage", fallback: "Select image")
   /// Select server
   internal static let selectServer = L10n.tr("Localizable", "selectServer", fallback: "Select server")
+  /// Select user on launch
+  internal static let selectUserOnLaunch = L10n.tr("Localizable", "selectUserOnLaunch", fallback: "Select user on launch")
+  /// Show the user selection screen when the app starts.
+  internal static let selectUserOnLaunchFooter = L10n.tr("Localizable", "selectUserOnLaunchFooter", fallback: "Show the user selection screen when the app starts.")
   /// Series
   internal static let series = L10n.tr("Localizable", "series", fallback: "Series")
   /// Series backdrop
