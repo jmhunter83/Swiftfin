@@ -229,6 +229,13 @@ extension VLCMediaPlayerProxy {
                 }
             }
 
+            // Open the stream at the resume point natively; VLCUI's own seek
+            // only lands after the first time tick, which briefly plays the
+            // start of the file
+            if !baseItem.isLiveStream, startSeconds > .zero {
+                options["start-time"] = startSeconds.seconds
+            }
+
             configuration.options = options
 
             return configuration
