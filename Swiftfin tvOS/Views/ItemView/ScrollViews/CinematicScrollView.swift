@@ -211,7 +211,7 @@ extension ItemView {
                         .overviewLineLimit(4)
 
                     // Buttons row - spans full width
-                    HStack(spacing: 24) {
+                    HStack(spacing: 32) {
                         if viewModel.item.type == .person || viewModel.item.type == .musicArtist {
                             ImageView(viewModel.item.imageSource(.primary, maxWidth: 300))
                                 .failure {

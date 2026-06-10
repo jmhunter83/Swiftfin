@@ -89,7 +89,7 @@ extension ItemView {
         // MARK: - Body
 
         var body: some View {
-            HStack(alignment: .center, spacing: 24) {
+            HStack(alignment: .center, spacing: 32) {
 
                 // MARK: Toggle Played
 
@@ -99,7 +99,7 @@ extension ItemView {
                     Button(L10n.played, systemImage: "checkmark") {
                         viewModel.send(.toggleIsPlayed)
                     }
-                    .buttonStyle(.tintedMaterial(tint: Color.jellyfinPurple, foregroundColor: .primary))
+                    .buttonStyle(.tintedMaterial(tint: .secondary, foregroundColor: .white))
                     .isSelected(isCheckmarkSelected)
                     .frame(width: 85, height: 85)
                 }
@@ -111,7 +111,7 @@ extension ItemView {
                 Button(L10n.favorited, systemImage: isHeartSelected ? "heart.fill" : "heart") {
                     viewModel.send(.toggleIsFavorite)
                 }
-                .buttonStyle(.tintedMaterial(tint: .pink, foregroundColor: .primary))
+                .buttonStyle(.tintedMaterial(tint: .secondary, foregroundColor: .white))
                 .isSelected(isHeartSelected)
                 .frame(width: 85, height: 85)
 
@@ -122,7 +122,7 @@ extension ItemView {
                         localTrailers: viewModel.localTrailers,
                         externalTrailers: viewModel.item.remoteTrailers ?? []
                     )
-                    .buttonStyle(.tintedMaterial(tint: .pink, foregroundColor: .primary))
+                    .buttonStyle(.tintedMaterial(tint: .secondary, foregroundColor: .white))
                     .frame(width: 85, height: 85)
                 }
 
@@ -161,8 +161,8 @@ extension ItemView {
                         Label(L10n.advanced, systemImage: "ellipsis")
                             .rotationEffect(.degrees(90))
                     }
-                    .buttonStyle(.material)
-                    .frame(width: 50, height: 85)
+                    .buttonStyle(.tintedMaterial(tint: .secondary, foregroundColor: .white))
+                    .frame(width: 85, height: 85)
                 }
             }
             .frame(height: 85)

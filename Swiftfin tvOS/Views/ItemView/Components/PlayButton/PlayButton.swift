@@ -89,7 +89,7 @@ extension ItemView {
         // MARK: - Body
 
         var body: some View {
-            HStack(spacing: 24) {
+            HStack(spacing: 32) {
                 playButton
 
                 if multipleVersions {
@@ -122,7 +122,7 @@ extension ItemView {
             Button {
                 play()
             } label: {
-                HStack(spacing: 20) {
+                HStack(spacing: 12) {
                     Image(systemName: "play.fill")
                         .font(.title2)
 
@@ -137,7 +137,7 @@ extension ItemView {
                         }
                     }
                 }
-                .padding(.horizontal, 30)
+                .padding(.horizontal, 20)
                 .padding(.vertical, 10)
             }
             .buttonStyle(
