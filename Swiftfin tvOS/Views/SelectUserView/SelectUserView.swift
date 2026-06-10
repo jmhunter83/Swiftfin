@@ -47,6 +47,8 @@ struct SelectUserView: View {
     private var isPresentingConfirmDeleteUsers = false
     @State
     private var isPresentingLocalPin: Bool = false
+    @State
+    private var isPresentingSessionExpired = false
 
     @StateObject
     private var viewModel = SelectUserViewModel()
@@ -109,6 +111,15 @@ struct SelectUserView: View {
     // MARK: - Select User(s)
 
     private func select(user: UserState, needsPin: Bool = true) {
+        // An empty token means the server revoked the session; a fresh one
+        // can only come from re-authentication since passwords aren't stored
+        guard user.accessToken.isNotEmpty else {
+            if let server = viewModel.servers.keys.first(where: { $0.id == user.serverID }) {
+                router.route(to: .userSignIn(server: server))
+            }
+            return
+        }
+
         switch user.accessPolicy {
         case .requireDeviceAuthentication:
             // Do nothing, no device authentication on tvOS
@@ -284,6 +295,16 @@ struct SelectUserView: View {
         .navigationBarBranding()
         .onAppear {
             viewModel.getServers()
+
+            if Defaults[.lastSessionExpiredUserID] != nil {
+                Defaults[.lastSessionExpiredUserID] = nil
+                isPresentingSessionExpired = true
+            }
+        }
+        .alert(L10n.sessionExpired, isPresented: $isPresentingSessionExpired) {
+            Button(L10n.dismiss, role: .cancel) {}
+        } message: {
+            Text(L10n.sessionExpiredDescription)
         }
         .onChange(of: isEditingUsers) {
             guard !isEditingUsers else { return }

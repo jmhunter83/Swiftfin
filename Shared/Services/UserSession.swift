@@ -32,6 +32,7 @@ final class UserSession {
                 deviceID: user.deviceID,
                 accessToken: user.accessToken
             ),
+            delegate: SessionUnauthorizedDelegate(),
             sessionConfiguration: .swiftfin,
             sessionDelegate: URLSessionProxyDelegate(logger: NetworkLogger.swiftfin())
         )

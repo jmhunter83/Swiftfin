@@ -115,6 +115,10 @@ extension Defaults.Keys {
     static let backgroundTimeStamp: Key<Date> = AppKey("backgroundTimeStamp", default: Date.now)
     static let lastSignedInUserID: Key<UserSignInState> = AppKey("lastSignedInUserID", default: .signedOut)
 
+    /// User whose stored token was rejected server-side; the select user
+    /// screen shows a one-time session expired message for them
+    static let lastSessionExpiredUserID: Key<String?> = AppKey("lastSessionExpiredUserID")
+
     static let selectUserDisplayType: Key<LibraryDisplayType> = AppKey("selectUserDisplayType", default: .grid)
     static let selectUserOnLaunch: Key<Bool> = AppKey("selectUserOnLaunch", default: false)
     static let selectUserServerSelection: Key<SelectUserServerSelection> = AppKey("selectUserServerSelection", default: .all)

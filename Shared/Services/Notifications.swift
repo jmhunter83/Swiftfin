@@ -134,6 +134,12 @@ extension Notifications.Key {
         Key("didSignOut")
     }
 
+    /// The session client received repeated 401s - the stored token was
+    /// revoked server-side and the user must re-authenticate
+    static var didReceiveSessionUnauthorized: Key<Void> {
+        Key("didReceiveSessionUnauthorized")
+    }
+
     // MARK: - App Flow
 
     static var processDeepLink: Key<Void> {

@@ -52,6 +52,7 @@ final class RootCoordinator: ObservableObject {
         Notifications[.didSignOut].subscribe(self, selector: #selector(didSignOut))
         Notifications[.didChangeCurrentServerURL].subscribe(self, selector: #selector(didChangeCurrentServerURL(_:)))
         Notifications[.applicationDidEnterBackground].subscribe(self, selector: #selector(didEnterBackground))
+        Notifications[.didReceiveSessionUnauthorized].subscribe(self, selector: #selector(didReceiveSessionUnauthorized))
     }
 
     func root(_ newRoot: RootItem) {
@@ -82,6 +83,31 @@ final class RootCoordinator: ObservableObject {
 
         guard Defaults[.selectUserOnLaunch], root.id == signedInRootID else { return }
 
+        root(.selectUser)
+    }
+
+    @objc
+    private func didReceiveSessionUnauthorized() {
+        #if os(tvOS)
+        let signedInRootID = RootItem.mainTab.id
+        #else
+        let signedInRootID = RootItem.serverCheck.id
+        #endif
+
+        guard root.id == signedInRootID,
+              let session = Container.shared.currentUserSession()
+        else { return }
+
+        logger.warning("Session token rejected for user \(session.user.id) - clearing token and routing to re-auth")
+
+        // The token is dead server-side and can't be renewed without
+        // credentials; clear it so the picker routes this user to the
+        // sign-in screen instead of looping 401s
+        session.user.accessToken = ""
+        Defaults[.lastSessionExpiredUserID] = session.user.id
+
+        Defaults[.lastSignedInUserID] = .signedOut
+        Container.shared.currentUserSession.reset()
         root(.selectUser)
     }
 

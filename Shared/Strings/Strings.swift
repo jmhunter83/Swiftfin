@@ -1368,6 +1368,10 @@ internal enum L10n {
   }
   /// Session
   internal static let session = L10n.tr("Localizable", "session", fallback: "Session")
+  /// Session Expired
+  internal static let sessionExpired = L10n.tr("Localizable", "sessionExpired", fallback: "Session Expired")
+  /// Your session token is no longer valid. Please sign in again to continue.
+  internal static let sessionExpiredDescription = L10n.tr("Localizable", "sessionExpiredDescription", fallback: "Your session token is no longer valid. Please sign in again to continue.")
   /// Sessions
   internal static let sessions = L10n.tr("Localizable", "sessions", fallback: "Sessions")
   /// Set
