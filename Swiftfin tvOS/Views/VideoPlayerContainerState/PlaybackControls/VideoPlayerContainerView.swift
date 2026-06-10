@@ -184,7 +184,8 @@ extension VideoPlayer {
             }
 
             let newConstant = supplementBottomAnchor.constant
-            print("🎯 Supplement positioning: \(didPresent ? "PRESENTING" : "DISMISSING") - constant: \(oldConstant) -> \(newConstant)")
+            manager.logger
+                .trace("Supplement positioning: \(didPresent ? "presenting" : "dismissing") - constant: \(oldConstant) -> \(newConstant)")
 
             containerState.isPresentingPlaybackControls = !didPresent
             containerState.supplementOffset = supplementBottomAnchor.constant
@@ -198,7 +199,7 @@ extension VideoPlayer {
             ) {
                 self.view.layoutIfNeeded()
             } completion: { _ in
-                print("✅ Supplement animation completed: final constant = \(self.supplementBottomAnchor.constant)")
+                self.manager.logger.trace("Supplement animation completed: final constant = \(self.supplementBottomAnchor.constant)")
             }
         }
 
@@ -274,6 +275,7 @@ extension VideoPlayer {
 
         private func requestFocusUpdateIfSafe() {
             guard isViewLoaded, view.window != nil else { return }
+            lastProgrammaticFocusRequest = Date()
             setNeedsFocusUpdate()
             updateFocusIfNeeded()
         }
@@ -370,10 +372,24 @@ extension VideoPlayer {
         @objc
         func ignorePress() {}
 
+        /// Most recent programmatic focus request; focus updates landing right
+        /// after one are not user interaction and must not re-arm the timer
+        private var lastProgrammaticFocusRequest: Date = .distantPast
+
         /// Touch-surface swipes move focus without generating UIPress events,
-        /// so this is the only place they can re-arm the auto-hide timer
+        /// so this is the only place they can re-arm the auto-hide timer.
+        /// Only a real move between two items counts - initial placement,
+        /// programmatic updates, and hosting-controller focus churn would
+        /// otherwise keep the overlay alive indefinitely
         override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
             super.didUpdateFocus(in: context, with: coordinator)
+
+            guard let previous = context.previouslyFocusedItem,
+                  let next = context.nextFocusedItem,
+                  previous !== next,
+                  Date().timeIntervalSince(lastProgrammaticFocusRequest) > 0.6
+            else { return }
+
             containerState.userDidInteract()
         }
 
