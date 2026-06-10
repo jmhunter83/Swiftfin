@@ -89,7 +89,7 @@ extension ItemView {
         // MARK: - Body
 
         var body: some View {
-            HStack(alignment: .center, spacing: 30) {
+            HStack(alignment: .center, spacing: 24) {
 
                 // MARK: Toggle Played
 
@@ -101,7 +101,7 @@ extension ItemView {
                     }
                     .buttonStyle(.tintedMaterial(tint: Color.jellyfinPurple, foregroundColor: .primary))
                     .isSelected(isCheckmarkSelected)
-                    .frame(width: 100, height: 100)
+                    .frame(width: 85, height: 85)
                 }
 
                 // MARK: Toggle Favorite
@@ -113,7 +113,7 @@ extension ItemView {
                 }
                 .buttonStyle(.tintedMaterial(tint: .pink, foregroundColor: .primary))
                 .isSelected(isHeartSelected)
-                .frame(width: 100, height: 100)
+                .frame(width: 85, height: 85)
 
                 // MARK: Watch a Trailer
 
@@ -123,7 +123,7 @@ extension ItemView {
                         externalTrailers: viewModel.item.remoteTrailers ?? []
                     )
                     .buttonStyle(.tintedMaterial(tint: .pink, foregroundColor: .primary))
-                    .frame(width: 100, height: 100)
+                    .frame(width: 85, height: 85)
                 }
 
                 // MARK: Advanced Options
@@ -162,10 +162,10 @@ extension ItemView {
                             .rotationEffect(.degrees(90))
                     }
                     .buttonStyle(.material)
-                    .frame(width: 60, height: 100)
+                    .frame(width: 50, height: 85)
                 }
             }
-            .frame(height: 100)
+            .frame(height: 85)
             .labelStyle(.iconOnly)
             .font(.title3)
             .fontWeight(.semibold)

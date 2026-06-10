@@ -211,7 +211,7 @@ extension ItemView {
                         .overviewLineLimit(4)
 
                     // Buttons row - spans full width
-                    HStack(spacing: 30) {
+                    HStack(spacing: 24) {
                         if viewModel.item.type == .person || viewModel.item.type == .musicArtist {
                             ImageView(viewModel.item.imageSource(.primary, maxWidth: 300))
                                 .failure {
@@ -224,12 +224,12 @@ extension ItemView {
                         } else if viewModel.item.presentPlayButton {
                             ItemView.PlayButton(viewModel: viewModel)
                                 .focused($focusedLayer, equals: .playButton)
-                                .frame(height: 100)
+                                .frame(height: 85)
                         }
 
                         ItemView.ActionButtonHStack(viewModel: viewModel)
                             .focused($focusedLayer, equals: .actionButtons)
-                            .frame(height: 100)
+                            .frame(height: 85)
 
                         Spacer()
                     }

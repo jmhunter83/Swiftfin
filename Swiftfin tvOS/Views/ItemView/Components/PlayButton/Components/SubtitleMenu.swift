@@ -34,7 +34,8 @@ extension ItemView {
                 }
             }
             .labelStyle(.iconOnly)
-            .buttonStyle(.material)
+            .font(.title3)
+            .buttonStyle(.tintedMaterial(tint: .secondary, foregroundColor: .white))
         }
     }
 }

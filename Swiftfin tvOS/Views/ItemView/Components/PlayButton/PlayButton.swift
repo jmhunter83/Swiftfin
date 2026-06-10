@@ -89,12 +89,12 @@ extension ItemView {
         // MARK: - Body
 
         var body: some View {
-            HStack(spacing: 30) {
+            HStack(spacing: 24) {
                 playButton
 
                 if multipleVersions {
                     VersionMenu(viewModel: viewModel, mediaSources: mediaSources)
-                        .frame(width: 100, height: 100)
+                        .frame(width: 85, height: 85)
                 }
 
                 if subtitleStreams.isNotEmpty {
@@ -102,14 +102,14 @@ extension ItemView {
                         selectedSubtitleStreamIndex: $selectedSubtitleStreamIndex,
                         subtitleStreams: subtitleStreams
                     )
-                    .frame(width: 100, height: 100)
+                    .frame(width: 85, height: 85)
                 }
 
                 if hasProgress {
                     startFromBeginningButton
                 }
             }
-            .frame(height: 100)
+            .frame(height: 85)
             .fontWeight(.semibold)
             .onChange(of: viewModel.selectedMediaSource) {
                 selectedSubtitleStreamIndex = nil
@@ -169,7 +169,7 @@ extension ItemView {
             .labelStyle(.iconOnly)
             .font(.title3)
             .fontWeight(.semibold)
-            .frame(width: 100, height: 100)
+            .frame(width: 85, height: 85)
             .enabled(isEnabled)
         }
 
