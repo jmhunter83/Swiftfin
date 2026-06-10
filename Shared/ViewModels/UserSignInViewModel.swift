@@ -14,6 +14,7 @@ import Get
 import JellyfinAPI
 import KeychainSwift
 import OrderedCollections
+import Pulse
 import SwiftUI
 
 // TODO: instead of just signing in duplicate user, send event for alert
@@ -31,7 +32,7 @@ import SwiftUI
 final class UserSignInViewModel: ViewModel {
 
     typealias AccessPolicyPair = (policy: UserAccessPolicy, evaluated: any EvaluatedLocalUserAccessPolicy)
-    typealias UserStateDataPair = (state: (state: UserState, accessToken: String), data: UserDto)
+    typealias UserStateDataPair = (state: (state: UserState, accessToken: String, deviceID: String), data: UserDto)
 
     struct EvaluatedPolicyMap {
         let action: (any EvaluatedLocalUserAccessPolicy) -> any EvaluatedLocalUserAccessPolicy
@@ -99,9 +100,35 @@ final class UserSignInViewModel: ViewModel {
 
     let server: ServerState
 
+    /// Device ID for the current sign-in attempt. The token Jellyfin issues is
+    /// bound to the device ID that authenticates, so the same ID must be used
+    /// for the auth request and stored for the user's session clients.
+    private(set) var signInDeviceID: String = JellyfinClient.Configuration.generateDeviceID()
+    private var signInClient: JellyfinClient?
+
     init(server: ServerState) {
         self.server = server
         super.init()
+    }
+
+    /// Builds the client for the next authentication attempt around a freshly
+    /// generated device ID. Regenerated per attempt so two different users
+    /// signing in through this view model never share a device server-side.
+    @discardableResult
+    func prepareSignInClient() -> JellyfinClient {
+        signInDeviceID = JellyfinClient.Configuration.generateDeviceID()
+
+        let client = JellyfinClient(
+            configuration: .swiftfinConfiguration(
+                url: server.currentURL,
+                deviceID: signInDeviceID
+            ),
+            sessionConfiguration: .swiftfin,
+            sessionDelegate: URLSessionProxyDelegate(logger: NetworkLogger.swiftfin())
+        )
+
+        signInClient = client
+        return client
     }
 
     @Function(\Action.Cases.getPublicData)
@@ -128,7 +155,7 @@ final class UserSignInViewModel: ViewModel {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: .objectReplacement)
 
-        let response = try await server.client.signIn(username: username, password: password)
+        let response = try await prepareSignInClient().signIn(username: username, password: password)
 
         guard let accessToken = response.accessToken,
               let userData = response.user,
@@ -140,7 +167,7 @@ final class UserSignInViewModel: ViewModel {
         }
 
         if let existingUser = existingUser(id: id) {
-            events.send(.existingUser(((existingUser, accessToken), userData)))
+            events.send(.existingUser(((existingUser, accessToken, signInDeviceID), userData)))
         } else {
             let newUserState = UserState(
                 id: id,
@@ -148,7 +175,7 @@ final class UserSignInViewModel: ViewModel {
                 username: username
             )
 
-            events.send(.connected(((newUserState, accessToken), userData)))
+            events.send(.connected(((newUserState, accessToken, signInDeviceID), userData)))
         }
     }
 
@@ -156,7 +183,10 @@ final class UserSignInViewModel: ViewModel {
     private func _signInQuickConnect(
         _ secret: String
     ) async throws {
-        let response = try await server.client.signIn(quickConnectSecret: secret)
+        // Quick connect binds the auth info at initiate time, so the secret
+        // must be redeemed by the same client that initiated (no regeneration)
+        let client = signInClient ?? prepareSignInClient()
+        let response = try await client.signIn(quickConnectSecret: secret)
 
         guard let accessToken = response.accessToken,
               let userData = response.user,
@@ -168,7 +198,7 @@ final class UserSignInViewModel: ViewModel {
         }
 
         if let existingUser = existingUser(id: id) {
-            events.send(.existingUser(((existingUser, accessToken), userData)))
+            events.send(.existingUser(((existingUser, accessToken, signInDeviceID), userData)))
         } else {
             let newUserState = UserState(
                 id: id,
@@ -176,7 +206,7 @@ final class UserSignInViewModel: ViewModel {
                 username: username
             )
 
-            events.send(.connected(((newUserState, accessToken), userData)))
+            events.send(.connected(((newUserState, accessToken, signInDeviceID), userData)))
         }
     }
 
@@ -231,6 +261,7 @@ final class UserSignInViewModel: ViewModel {
 
         savedUserState.accessPolicy = accessPolicy
         savedUserState.accessToken = user.state.accessToken
+        savedUserState.deviceID = user.state.deviceID
         savedUserState.data = user.data
 
         if let evaluatedPinPolicy = evaluatedPolicy as? PinEvaluatedUserAccessPolicy {
@@ -269,6 +300,7 @@ final class UserSignInViewModel: ViewModel {
 
         if replaceForAccessToken {
             user.state.state.accessToken = user.state.accessToken
+            user.state.state.deviceID = user.state.deviceID
         }
 
         events.send(.saved(user.state.state))

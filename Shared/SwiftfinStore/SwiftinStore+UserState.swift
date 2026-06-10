@@ -62,6 +62,38 @@ extension UserState {
         }
     }
 
+    /// The device ID this user's token is bound to server-side. Generated at
+    /// sign-in and used for both the authentication request and all session
+    /// clients - a mismatch gets the token rejected or revoked (401 on user
+    /// switch). Falls back to the legacy derived ID for users stored before
+    /// per-user IDs were persisted, so their working tokens keep the exact
+    /// device ID they've been presented with.
+    var deviceID: String {
+        get {
+            let keychain = Container.shared.keychainService()
+
+            if let deviceID = keychain.get("\(id)-deviceID") {
+                return deviceID
+            }
+
+            let legacyDeviceID = "\(UIDevice.platform)_\(UIDevice.vendorUUIDString)_\(id)"
+            keychain.set(
+                legacyDeviceID,
+                forKey: "\(id)-deviceID",
+                withAccess: .accessibleWhenUnlockedThisDeviceOnly
+            )
+
+            return legacyDeviceID
+        }
+        nonmutating set {
+            Container.shared.keychainService().set(
+                newValue,
+                forKey: "\(id)-deviceID",
+                withAccess: .accessibleWhenUnlockedThisDeviceOnly
+            )
+        }
+    }
+
     var data: UserDto {
         get {
             StoredValues[.User.data(id: id)]
@@ -134,6 +166,7 @@ extension UserState {
         let keychain = Container.shared.keychainService()
         keychain.delete("\(id)-pin")
         keychain.delete("\(id)-accessToken")
+        keychain.delete("\(id)-deviceID")
     }
 
     /// Deletes user settings from `UserDefaults` and `StoredValues`
@@ -158,7 +191,7 @@ extension UserState {
     /// with an access token
     func getUserData(server: ServerState) async throws -> UserDto {
         let client = JellyfinClient(
-            configuration: .swiftfinConfiguration(url: server.currentURL, userID: id),
+            configuration: .swiftfinConfiguration(url: server.currentURL, deviceID: deviceID),
             sessionConfiguration: .swiftfin,
             sessionDelegate: URLSessionProxyDelegate(logger: NetworkLogger.swiftfin()),
             accessToken: accessToken

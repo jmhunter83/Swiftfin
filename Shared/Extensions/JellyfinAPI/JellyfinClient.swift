@@ -38,9 +38,21 @@ extension JellyfinClient {
 
 extension JellyfinClient.Configuration {
 
+    /// A device ID for a new user, unique so each Jellyfin user gets a distinct
+    /// (client, deviceID) pair. Tokens are bound server-side to the device ID
+    /// that authenticated, and a new authentication on an already-used device ID
+    /// invalidates the tokens issued to it - sharing one ID across users breaks
+    /// whoever signed in before.
+    static func generateDeviceID() -> String {
+        "\(UIDevice.platform)_\(UUID().uuidString)"
+    }
+
+    /// Configuration for server communication. `deviceID` must be the user's
+    /// stored device ID for any authenticated client; nil uses the install-wide
+    /// base ID and is only for public, unauthenticated endpoints.
     static func swiftfinConfiguration(
         url: URL,
-        userID: String? = nil,
+        deviceID: String? = nil,
         accessToken: String? = nil
     ) -> Self {
 
@@ -50,11 +62,7 @@ extension JellyfinClient.Configuration {
             .unicodeScalars
             .filter { CharacterSet.urlQueryAllowed.contains($0) }
             .description
-        // Per-user device ID so each Jellyfin user gets a distinct (client, deviceID) pair.
-        // Without this, signing in as a second user invalidates the first user's token server-side
-        // and switching back returns 401.
         let baseDeviceID = "\(UIDevice.platform)_\(UIDevice.vendorUUIDString)"
-        let deviceID = userID.map { "\(baseDeviceID)_\($0)" } ?? baseDeviceID
         let version = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "0.0.1"
 
         return .init(
@@ -62,7 +70,7 @@ extension JellyfinClient.Configuration {
             accessToken: accessToken,
             client: client,
             deviceName: deviceName,
-            deviceID: deviceID,
+            deviceID: deviceID ?? baseDeviceID,
             version: version
         )
     }

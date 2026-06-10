@@ -87,7 +87,9 @@ struct UserSignInView: View {
     private func runQuickConnect() {
         Task {
             do {
-                guard let secret = try await quickConnectAction?(client: viewModel.server.client) else {
+                // Initiate with the sign-in client: the token quick connect
+                // issues is bound to the device ID that initiated
+                guard let secret = try await quickConnectAction?(client: viewModel.prepareSignInClient()) else {
                     logger.critical("QuickConnect called without necessary action!")
                     throw ErrorMessage(L10n.unknownError)
                 }
