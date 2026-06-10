@@ -241,7 +241,7 @@ extension VideoPlayer {
                     } else if containerState.supplementRecentlyDismissed {
                         // Supplement was just dismissed - clear flag but keep overlay visible
                         containerState.supplementRecentlyDismissed = false
-                    } else if isScrubbing, !isPresentingOverlay {
+                    } else if isScrubbing {
                         // Menu during a touch-surface scrub cancels it instead of exiting
                         containerState.cancelPanScrub()
                     } else if isPresentingOverlay {
@@ -279,6 +279,10 @@ extension VideoPlayer {
         // MARK: - Multi-Click Skip Logic
 
         private func handleSkip(direction: SkipDirection) {
+            // Tap-to-skip is a playback-only gesture; while paused the
+            // touch surface scrubs instead
+            guard manager.playbackRequestStatus == .playing else { return }
+
             // Show overlay if not visible
             if !containerState.isPresentingOverlay {
                 withAnimation(.linear(duration: 0.25)) {

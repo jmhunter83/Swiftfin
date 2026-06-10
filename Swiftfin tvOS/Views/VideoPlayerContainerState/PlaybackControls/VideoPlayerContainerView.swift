@@ -141,6 +141,13 @@ extension VideoPlayer {
             return []
         }
 
+        /// Swipes scrub while paused with the overlay visible; veto focus
+        /// moves so the pan doesn't also walk focus across the controls
+        override func shouldUpdateFocus(in context: UIFocusUpdateContext) -> Bool {
+            if containerState.isScrubbing { return false }
+            return super.shouldUpdateFocus(in: context)
+        }
+
         init(
             containerState: VideoPlayerContainerState,
             manager: MediaPlayerManager,

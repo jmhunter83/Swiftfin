@@ -263,6 +263,9 @@ class VideoPlayerContainerState: ObservableObject {
                     }
                     self.timer.stop()
                 } else if status == .playing {
+                    // Resuming mid-pan commits the scrubbed position
+                    self.endPanScrub()
+
                     // When playing, start the auto-hide timer
                     if self.overlayState == .visible && self.supplementState == .closed {
                         self.timer.poke()
@@ -419,13 +422,15 @@ class VideoPlayerContainerState: ObservableObject {
 
     // MARK: - Pan-to-Scrub
 
-    /// Touch-surface pan scrubbing is only available while the overlay is
-    /// hidden, where horizontal swipes don't conflict with focus navigation
+    /// Touch-surface pan scrubbing is only available while paused, keeping
+    /// taps-to-skip a playback-only gesture. Focus movement is vetoed by the
+    /// container while a scrub is active, so the overlay may stay visible.
     var canPanScrub: Bool {
-        overlayState == .hidden &&
+        overlayState != .locked &&
             supplementState == .closed &&
             scrubState == .idle &&
             manager?.state == .playback &&
+            manager?.playbackRequestStatus == .paused &&
             (manager?.item.runtime ?? .zero) > .zero
     }
 

@@ -7,6 +7,7 @@
 //
 
 import Combine
+import JellyfinAPI
 @testable import Swiftfin_tvOS
 import XCTest
 
@@ -191,17 +192,135 @@ final class VideoPlayerContainerStateTests: XCTestCase {
 
     // MARK: - Pan-to-Scrub Tests
 
+    private func makeManager(runTimeTicks: Int? = 36_000_000_000) async -> MediaPlayerManager {
+        var baseItem = BaseItemDto()
+        baseItem.runTimeTicks = runTimeTicks
+
+        let playbackItem = MediaPlayerItem(
+            baseItem: baseItem,
+            mediaSource: MediaSourceInfo(),
+            playSessionID: "test-session",
+            url: URL(string: "https://example.com/video")!
+        )
+
+        // Drive the manager through the start action so the macro's core
+        // reaches .playback; a direct state assignment gets overwritten
+        // by the core's publisher
+        let manager = MediaPlayerManager(item: baseItem) { _ in playbackItem }
+        await manager.start()
+
+        // The core's state lands on the class property via the main queue
+        for _ in 0 ..< 100 where manager.state != .playback {
+            await Task.yield()
+        }
+
+        return manager
+    }
+
     func testCanPanScrubFalseWithoutManager() {
         XCTAssertFalse(sut.canPanScrub)
     }
 
-    func testCanPanScrubFalseWhenOverlayVisible() {
+    func testCanPanScrubFalseWhilePlaying() async {
+        let manager = await makeManager()
+        sut.manager = manager
+
+        XCTAssertEqual(manager.playbackRequestStatus, .playing)
+        XCTAssertFalse(sut.canPanScrub)
+    }
+
+    func testCanPanScrubTrueWhilePaused() async {
+        let manager = await makeManager()
+        sut.manager = manager
+
+        await manager.setPlaybackRequestStatus(status: .paused)
+
+        XCTAssertTrue(sut.canPanScrub)
+    }
+
+    func testCanPanScrubTrueWhenOverlayVisibleAndPaused() async {
+        let manager = await makeManager()
+        sut.manager = manager
+
+        await manager.setPlaybackRequestStatus(status: .paused)
         sut.setOverlayVisible(true, animated: false)
+
+        XCTAssertTrue(sut.canPanScrub)
+    }
+
+    func testCanPanScrubFalseWhenGestureLocked() async {
+        let manager = await makeManager()
+        sut.manager = manager
+
+        await manager.setPlaybackRequestStatus(status: .paused)
+        sut.isGestureLocked = true
 
         XCTAssertFalse(sut.canPanScrub)
     }
 
+    func testCanPanScrubFalseWithoutRuntime() async {
+        let manager = await makeManager(runTimeTicks: nil)
+        sut.manager = manager
+
+        await manager.setPlaybackRequestStatus(status: .paused)
+
+        XCTAssertFalse(sut.canPanScrub)
+    }
+
+    func testPanScrubWhilePausedUpdatesAndCommits() async {
+        let manager = await makeManager()
+        sut.manager = manager
+
+        await manager.setPlaybackRequestStatus(status: .paused)
+
+        sut.beginPanScrub()
+        XCTAssertEqual(sut.scrubState, .scrubbing)
+
+        sut.updatePanScrub(translationX: 200, viewWidth: 1000)
+        XCTAssertGreaterThan(sut.scrubbedSeconds.value, .zero)
+        XCTAssertNotNil(sut.skipIndicatorText)
+
+        sut.endPanScrub()
+        XCTAssertEqual(sut.scrubState, .idle)
+    }
+
+    func testResumeCommitsActivePanScrub() async {
+        let manager = await makeManager()
+        sut.manager = manager
+        sut.observePlaybackStatus()
+
+        await manager.setPlaybackRequestStatus(status: .paused)
+
+        sut.beginPanScrub()
+        sut.updatePanScrub(translationX: 200, viewWidth: 1000)
+        XCTAssertEqual(sut.scrubState, .scrubbing)
+
+        await manager.setPlaybackRequestStatus(status: .playing)
+
+        // The status observer delivers on the main queue, so the
+        // scrub commit lands a hop after the await returns
+        let idle = expectation(description: "scrub ends on resume")
+        let cancellable = sut.$scrubState.sink { state in
+            if state == .idle {
+                idle.fulfill()
+            }
+        }
+
+        await fulfillment(of: [idle], timeout: 1)
+        cancellable.cancel()
+        XCTAssertEqual(sut.scrubState, .idle)
+    }
+
     func testBeginPanScrubNoOpsWhenUnavailable() {
+        sut.beginPanScrub()
+
+        XCTAssertEqual(sut.scrubState, .idle)
+    }
+
+    func testBeginPanScrubNoOpsWhilePlaying() async {
+        let manager = await makeManager()
+        sut.manager = manager
+
         sut.beginPanScrub()
 
         XCTAssertEqual(sut.scrubState, .idle)
