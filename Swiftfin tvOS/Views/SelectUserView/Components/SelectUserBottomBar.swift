@@ -6,6 +6,7 @@
 // Copyright (c) 2026 Jellyfin & Jellyfin Contributors
 //
 
+import Defaults
 import OrderedCollections
 import SwiftUI
 
@@ -14,6 +15,9 @@ extension SelectUserView {
     struct SelectUserBottomBar: View {
 
         // MARK: - State & Environment Objects
+
+        @Default(.selectUserOnLaunch)
+        private var selectUserOnLaunch
 
         @Router
         private var router
@@ -63,6 +67,8 @@ extension SelectUserView {
                 Button(L10n.editUsers, systemImage: "person.crop.circle") {
                     isEditing.toggle()
                 }
+
+                Toggle(L10n.selectUserOnLaunch, systemImage: "person.2", isOn: $selectUserOnLaunch)
 
                 Divider()
 
