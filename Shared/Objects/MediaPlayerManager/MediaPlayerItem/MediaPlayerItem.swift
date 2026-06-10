@@ -50,6 +50,16 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
                     proxy.setSubtitleStream(.init(index: subtitleIndex))
                 }
             }
+
+            // Remember the choice for this series/movie. Doesn't fire for the
+            // initial assignment in init since that bypasses didSet.
+            if let index = selectedSubtitleStreamIndex {
+                if index == -1 {
+                    recordStickySubtitleLanguage("off")
+                } else if let language = subtitleStreams.first(where: { $0.index == index })?.language {
+                    recordStickySubtitleLanguage(language)
+                }
+            }
         }
     }
 
@@ -125,8 +135,21 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
             selectedAudioStreamIndex = audioStreams.first?.index
         }
 
+        // An explicit pre-play pick also updates the per-title memory. Resolve
+        // against the original streams since `preferred` is in server index space.
+        if let preferred = preferredSubtitleStreamIndex {
+            if preferred == -1 {
+                recordStickySubtitleLanguage("off")
+            } else if let language = mediaSource.mediaStreams?
+                .first(where: { $0.type == .subtitle && $0.index == preferred })?.language
+            {
+                recordStickySubtitleLanguage(language)
+            }
+        }
+
         selectedSubtitleStreamIndex = Self.initialSubtitleStreamIndex(
             preferred: preferredSubtitleStreamIndex,
+            stickyLanguage: stickySubtitleLanguage,
             mediaSource: mediaSource,
             adjustedSubtitleStreams: subtitleStreams
         )
@@ -140,21 +163,50 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
 
     /// Resolves the initial subtitle track. `preferred` is in the original server index
     /// space; tracks are renumbered by `adjustedTrackIndexes`, so map by position within
-    /// the subtitle list, which is order-preserving.
+    /// the subtitle list, which is order-preserving. `stickyLanguage` is the remembered
+    /// per-title choice: a language code or "off".
     static func initialSubtitleStreamIndex(
         preferred: Int?,
+        stickyLanguage: String? = nil,
         mediaSource: MediaSourceInfo,
         adjustedSubtitleStreams: [MediaStream]
     ) -> Int {
-        guard let preferred else { return mediaSource.defaultSubtitleStreamIndex ?? -1 }
-        guard preferred != -1 else { return -1 }
+        if let preferred {
+            guard preferred != -1 else { return -1 }
 
-        let originalSubtitles = (mediaSource.mediaStreams ?? []).filter { $0.type == .subtitle }
+            let originalSubtitles = (mediaSource.mediaStreams ?? []).filter { $0.type == .subtitle }
 
-        guard let position = originalSubtitles.firstIndex(where: { $0.index == preferred }),
-              position < adjustedSubtitleStreams.count
-        else { return mediaSource.defaultSubtitleStreamIndex ?? -1 }
+            if let position = originalSubtitles.firstIndex(where: { $0.index == preferred }),
+               position < adjustedSubtitleStreams.count
+            {
+                return adjustedSubtitleStreams[position].index ?? -1
+            }
+        }
 
-        return adjustedSubtitleStreams[position].index ?? -1
+        if let stickyLanguage, stickyLanguage.isNotEmpty {
+            guard stickyLanguage != "off" else { return -1 }
+
+            if let match = adjustedSubtitleStreams.first(where: { $0.language?.lowercased() == stickyLanguage.lowercased() }) {
+                return match.index ?? -1
+            }
+        }
+
+        return mediaSource.defaultSubtitleStreamIndex ?? -1
+    }
+
+    // MARK: sticky subtitle selection
+
+    /// Key for the remembered subtitle choice, shared by all episodes of a series.
+    private var stickySubtitleKey: StoredValues.Key<String> {
+        StoredValues.Keys.User.stickySubtitleLanguage(itemID: baseItem.seriesID ?? baseItem.id)
+    }
+
+    private var stickySubtitleLanguage: String? {
+        let stored = StoredValues[stickySubtitleKey]
+        return stored.isEmpty ? nil : stored
+    }
+
+    private func recordStickySubtitleLanguage(_ language: String) {
+        StoredValues[stickySubtitleKey] = language.lowercased()
     }
 }

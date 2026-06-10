@@ -106,4 +106,81 @@ final class MediaPlayerItemSubtitleSelectionTests: XCTestCase {
 
         XCTAssertEqual(item.selectedSubtitleStreamIndex, 1)
     }
+
+    // MARK: sticky per-title selection
+
+    private func adjustedSubtitleStreams(for mediaSource: MediaSourceInfo) -> [MediaStream] {
+        let adjusted = mediaSource.mediaStreams?.adjustedTrackIndexes(
+            for: mediaSource.transcodingURL == nil ? .directPlay : .transcode,
+            selectedAudioStreamIndex: mediaSource.defaultAudioStreamIndex ?? 0
+        )
+        return adjusted?.filter { $0.type == .subtitle } ?? []
+    }
+
+    func testStickyLanguageSelectsMatchingStream() {
+        // Direct play renumbers to video(0), audio(1, 2), subtitles(3 eng, 4 spa)
+        let mediaSource = makeMediaSource()
+
+        let index = MediaPlayerItem.initialSubtitleStreamIndex(
+            preferred: nil,
+            stickyLanguage: "spa",
+            mediaSource: mediaSource,
+            adjustedSubtitleStreams: adjustedSubtitleStreams(for: mediaSource)
+        )
+
+        XCTAssertEqual(index, 4)
+    }
+
+    func testStickyLanguageIsCaseInsensitive() {
+        let mediaSource = makeMediaSource()
+
+        let index = MediaPlayerItem.initialSubtitleStreamIndex(
+            preferred: nil,
+            stickyLanguage: "SPA",
+            mediaSource: mediaSource,
+            adjustedSubtitleStreams: adjustedSubtitleStreams(for: mediaSource)
+        )
+
+        XCTAssertEqual(index, 4)
+    }
+
+    func testStickyOffOverridesServerDefault() {
+        let mediaSource = makeMediaSource(defaultSubtitleStreamIndex: 1)
+
+        let index = MediaPlayerItem.initialSubtitleStreamIndex(
+            preferred: nil,
+            stickyLanguage: "off",
+            mediaSource: mediaSource,
+            adjustedSubtitleStreams: adjustedSubtitleStreams(for: mediaSource)
+        )
+
+        XCTAssertEqual(index, -1)
+    }
+
+    func testStickyUnmatchedLanguageFallsBackToDefault() {
+        let mediaSource = makeMediaSource(defaultSubtitleStreamIndex: 1)
+
+        let index = MediaPlayerItem.initialSubtitleStreamIndex(
+            preferred: nil,
+            stickyLanguage: "ger",
+            mediaSource: mediaSource,
+            adjustedSubtitleStreams: adjustedSubtitleStreams(for: mediaSource)
+        )
+
+        XCTAssertEqual(index, 1)
+    }
+
+    func testPreferredWinsOverSticky() {
+        // Explicit pick of original index 1 ("eng", position 0) maps to adjusted index 3
+        let mediaSource = makeMediaSource()
+
+        let index = MediaPlayerItem.initialSubtitleStreamIndex(
+            preferred: 1,
+            stickyLanguage: "spa",
+            mediaSource: mediaSource,
+            adjustedSubtitleStreams: adjustedSubtitleStreams(for: mediaSource)
+        )
+
+        XCTAssertEqual(index, 3)
+    }
 }

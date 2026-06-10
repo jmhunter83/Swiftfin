@@ -132,6 +132,16 @@ extension StoredValues.Keys {
             )
         }
 
+        /// Last subtitle choice for a series or movie: a language code,
+        /// "off" when explicitly disabled, or "" when never set
+        static func stickySubtitleLanguage(itemID: String?) -> Key<String> {
+            CurrentUserKey(
+                itemID,
+                domain: "stickySubtitleLanguage",
+                default: ""
+            )
+        }
+
         static func pinHint(id: String) -> Key<String> {
             UserKey(
                 "pinHint",
