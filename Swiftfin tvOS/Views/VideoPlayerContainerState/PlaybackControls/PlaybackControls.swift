@@ -279,8 +279,15 @@ extension VideoPlayer {
         // MARK: - Multi-Click Skip Logic
 
         private func handleSkip(direction: SkipDirection) {
+            manager.logger.trace(
+                "Skip \(direction): status=\(manager.playbackRequestStatus), scrub=\(containerState.scrubState), proxy=\(manager.proxy == nil ? "nil" : "set")"
+            )
+
             // Tap-to-skip is a playback-only gesture; while paused the
-            // touch surface scrubs instead
+            // touch surface scrubs instead. If skips ever go dead during
+            // visible playback, the trace above shows which gate ate them
+            // (suspect: VLC's transient paused report after a seek syncing
+            // into playbackRequestStatus)
             guard manager.playbackRequestStatus == .playing else { return }
 
             // Show overlay if not visible

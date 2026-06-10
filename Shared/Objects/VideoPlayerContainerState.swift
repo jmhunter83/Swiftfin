@@ -440,6 +440,7 @@ class VideoPlayerContainerState: ObservableObject {
     func beginPanScrub() {
         guard canPanScrub, let manager else { return }
 
+        logger.trace("Pan scrub began at \(manager.seconds)")
         isPanScrubbing = true
         isScrubbing = true
         scrubbedSeconds.value = manager.seconds
@@ -469,6 +470,7 @@ class VideoPlayerContainerState: ObservableObject {
     func endPanScrub() {
         guard isPanScrubbing, scrubState == .scrubbing else { return }
 
+        logger.trace("Pan scrub ended, committing \(scrubbedSeconds.value) (proxy=\(manager?.proxy == nil ? "nil" : "set"))")
         isPanScrubbing = false
         isScrubbing = false
         manager?.proxy?.setSeconds(scrubbedSeconds.value)
@@ -478,6 +480,7 @@ class VideoPlayerContainerState: ObservableObject {
     func cancelPanScrub() {
         guard isPanScrubbing, scrubState == .scrubbing else { return }
 
+        logger.trace("Pan scrub cancelled")
         // Revert before ending the scrub so the seek-on-scrub-end
         // observer sees no position delta and skips the commit
         scrubbedSeconds.value = manager?.seconds ?? .zero
