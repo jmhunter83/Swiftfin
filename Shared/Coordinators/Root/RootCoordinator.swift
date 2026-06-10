@@ -51,6 +51,7 @@ final class RootCoordinator: ObservableObject {
         Notifications[.didSignIn].subscribe(self, selector: #selector(didSignIn))
         Notifications[.didSignOut].subscribe(self, selector: #selector(didSignOut))
         Notifications[.didChangeCurrentServerURL].subscribe(self, selector: #selector(didChangeCurrentServerURL(_:)))
+        Notifications[.applicationDidEnterBackground].subscribe(self, selector: #selector(didEnterBackground))
     }
 
     func root(_ newRoot: RootItem) {
@@ -66,6 +67,22 @@ final class RootCoordinator: ObservableObject {
         #else
         root(.serverCheck)
         #endif
+    }
+
+    @objc
+    private func didEnterBackground() {
+        // The launch check in init only runs on a cold start; tvOS resumes
+        // the suspended app, so re-arm the user picker while backgrounded.
+        // The session stays signed in - picking a user routes through didSignIn.
+        #if os(tvOS)
+        let signedInRootID = RootItem.mainTab.id
+        #else
+        let signedInRootID = RootItem.serverCheck.id
+        #endif
+
+        guard Defaults[.selectUserOnLaunch], root.id == signedInRootID else { return }
+
+        root(.selectUser)
     }
 
     @objc
