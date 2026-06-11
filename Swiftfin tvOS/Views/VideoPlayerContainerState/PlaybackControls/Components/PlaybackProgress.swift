@@ -48,13 +48,16 @@ extension VideoPlayer.PlaybackControls {
                         .fill(.white)
                         .frame(width: geometry.size.width * progress, height: 6)
 
-                    // Current position indicator (circle), larger while the
-                    // timeline holds focus
+                    // Current position indicator (circle); turns orange with a
+                    // glow while the timeline holds focus
                     Circle()
-                        .fill(.white)
+                        .fill(isFocused ? Color.orange : .white)
                         .frame(width: isFocused ? 18 : 12, height: isFocused ? 18 : 12)
                         .offset(x: geometry.size.width * progress - (isFocused ? 9 : 6))
-                        .shadow(color: .black.opacity(0.3), radius: isFocused ? 4 : 2)
+                        .shadow(
+                            color: isFocused ? Color.orange.opacity(0.8) : .black.opacity(0.3),
+                            radius: isFocused ? 8 : 2
+                        )
                 }
                 .frame(height: 18)
             }
