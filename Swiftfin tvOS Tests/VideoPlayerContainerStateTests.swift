@@ -190,6 +190,92 @@ final class VideoPlayerContainerStateTests: XCTestCase {
         XCTAssertEqual(sut.overlayState, .locked)
     }
 
+    // MARK: - Menu Keep-Alive Tests
+
+    func testOpenMenuPreventsAutoHide() {
+        sut = VideoPlayerContainerState(timerInterval: 0.05)
+        sut.setOverlayVisible(true, animated: false)
+        sut.menuContentDidAppear()
+
+        let fired = expectation(description: "timer does not fire while menu is open")
+        fired.isInverted = true
+        let cancellable = sut.timer.sink {
+            fired.fulfill()
+        }
+
+        wait(for: [fired], timeout: 0.3)
+        cancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .visible)
+    }
+
+    func testClosingMenuRearmsAutoHide() {
+        sut = VideoPlayerContainerState(timerInterval: 0.05)
+        sut.setOverlayVisible(true, animated: false)
+        sut.menuContentDidAppear()
+        sut.menuContentDidDisappear()
+
+        let hidden = expectation(description: "overlay hides after menu closes")
+        let cancellable = sut.$overlayState.sink { state in
+            if state == .hidden {
+                hidden.fulfill()
+            }
+        }
+
+        wait(for: [hidden], timeout: 1)
+        cancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .hidden)
+    }
+
+    func testMenuAppearCountsAreBalanced() {
+        // Menu content with multiple children can fire appear/disappear
+        // once per child; the overlay must stay until the last disappear
+        sut = VideoPlayerContainerState(timerInterval: 0.05)
+        sut.setOverlayVisible(true, animated: false)
+        sut.menuContentDidAppear()
+        sut.menuContentDidAppear()
+        sut.menuContentDidDisappear()
+
+        let fired = expectation(description: "timer does not fire while a menu is still open")
+        fired.isInverted = true
+        let cancellable = sut.timer.sink {
+            fired.fulfill()
+        }
+
+        wait(for: [fired], timeout: 0.3)
+        cancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .visible)
+
+        sut.menuContentDidDisappear()
+
+        let hidden = expectation(description: "overlay hides after last menu closes")
+        let hiddenCancellable = sut.$overlayState.sink { state in
+            if state == .hidden {
+                hidden.fulfill()
+            }
+        }
+
+        wait(for: [hidden], timeout: 1)
+        hiddenCancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .hidden)
+    }
+
+    func testUnbalancedMenuDisappearDoesNotUnderflow() {
+        sut = VideoPlayerContainerState(timerInterval: 0.05)
+        sut.setOverlayVisible(true, animated: false)
+        sut.menuContentDidDisappear()
+        sut.menuContentDidAppear()
+
+        let fired = expectation(description: "timer does not fire while menu is open")
+        fired.isInverted = true
+        let cancellable = sut.timer.sink {
+            fired.fulfill()
+        }
+
+        wait(for: [fired], timeout: 0.3)
+        cancellable.cancel()
+        XCTAssertEqual(sut.overlayState, .visible)
+    }
+
     // MARK: - Pan-to-Scrub Tests
 
     private func makeManager(runTimeTicks: Int? = 36_000_000_000) async -> MediaPlayerManager {

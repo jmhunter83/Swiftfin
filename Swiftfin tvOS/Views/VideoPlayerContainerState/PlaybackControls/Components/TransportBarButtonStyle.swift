@@ -116,13 +116,6 @@ struct TransportBarMenu<Label: View, Content: View>: View {
     @EnvironmentObject
     private var containerState: VideoPlayerContainerState
 
-    @State
-    private var wasFocused = false
-    @State
-    private var menuOpenPokeTask: Task<Void, Never>?
-    @State
-    private var lastFocusTime: UInt64 = 0
-
     let title: String
     let label: () -> Label
     let content: () -> Content
@@ -139,7 +132,11 @@ struct TransportBarMenu<Label: View, Content: View>: View {
 
     var body: some View {
         Menu {
+            // Menu content only exists while the popup is presented, so its
+            // appear/disappear drives the overlay keep-alive
             content()
+                .onAppear { containerState.menuContentDidAppear() }
+                .onDisappear { containerState.menuContentDidDisappear() }
         } label: {
             label()
                 .modifier(TransportBarFocusStyle(isFocused: isFocused))
@@ -147,32 +144,7 @@ struct TransportBarMenu<Label: View, Content: View>: View {
         .buttonStyle(.plain)
         .modifier(TransportBarFocusEffects(isFocused: isFocused, debugLabel: title))
         .onChange(of: isFocused) { oldValue, newValue in
-            let now = DispatchTime.now().uptimeNanoseconds
-            let deltaUs = lastFocusTime > 0 ? (now - lastFocusTime) / 1000 : 0
-            lastFocusTime = now
-
-            focusLog.debug("🎭 '\(title)': \(oldValue) → \(newValue) [+\(deltaUs)µs]")
-            handleFocusChange(newValue)
-        }
-        .onDisappear {
-            menuOpenPokeTask?.cancel()
-        }
-    }
-
-    private func handleFocusChange(_ newValue: Bool) {
-        if newValue {
-            menuOpenPokeTask?.cancel()
-            menuOpenPokeTask = nil
-            wasFocused = true
-        } else if wasFocused {
-            wasFocused = false
-            menuOpenPokeTask?.cancel()
-            menuOpenPokeTask = Task { @MainActor in
-                while !Task.isCancelled {
-                    containerState.timer.poke()
-                    try? await Task.sleep(for: .seconds(3))
-                }
-            }
+            focusLog.debug("🎭 '\(title)': \(oldValue) → \(newValue)")
         }
     }
 }
@@ -189,9 +161,6 @@ struct SidePanelMenu<Label: View, Content: View>: View {
     @EnvironmentObject
     private var containerState: VideoPlayerContainerState
 
-    @State
-    private var menuOpenPokeTask: Task<Void, Never>?
-
     let title: String
     let label: () -> Label
     let content: () -> Content
@@ -208,7 +177,11 @@ struct SidePanelMenu<Label: View, Content: View>: View {
 
     var body: some View {
         Menu {
+            // Menu content only exists while the popup is presented, so its
+            // appear/disappear drives the overlay keep-alive
             content()
+                .onAppear { containerState.menuContentDidAppear() }
+                .onDisappear { containerState.menuContentDidDisappear() }
         } label: {
             label()
                 .font(.title2)
@@ -221,25 +194,8 @@ struct SidePanelMenu<Label: View, Content: View>: View {
         .scaleEffect(isFocused ? 1.15 : 1.0)
         .animation(.spring(duration: 0.2), value: isFocused)
         .onChange(of: isFocused) { _, newValue in
-            handleFocusChange(newValue)
-        }
-        .onDisappear {
-            menuOpenPokeTask?.cancel()
-        }
-    }
-
-    private func handleFocusChange(_ newValue: Bool) {
-        if newValue {
-            menuOpenPokeTask?.cancel()
-            menuOpenPokeTask = nil
-            containerState.timer.poke()
-        } else {
-            menuOpenPokeTask?.cancel()
-            menuOpenPokeTask = Task { @MainActor in
-                while !Task.isCancelled {
-                    containerState.timer.poke()
-                    try? await Task.sleep(for: .seconds(3))
-                }
+            if newValue {
+                containerState.timer.poke()
             }
         }
     }

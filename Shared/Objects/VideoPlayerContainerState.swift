@@ -306,6 +306,29 @@ class VideoPlayerContainerState: ObservableObject {
         timer.poke()
     }
 
+    // MARK: - Menu Keep-Alive
+
+    /// Count of open transport menus. Menu popups render their content only
+    /// while presented, so content appear/disappear is the open/close signal.
+    /// Counted because a multi-child content builder fires once per child.
+    private var openMenuCount = 0
+
+    /// Call from a transport menu's content `onAppear`. Holds the overlay
+    /// visible while the menu popup is open.
+    func menuContentDidAppear() {
+        openMenuCount += 1
+        timer.stop()
+    }
+
+    /// Call from a transport menu's content `onDisappear`. Re-arms the
+    /// auto-hide timer once the last open menu closes.
+    func menuContentDidDisappear() {
+        openMenuCount = max(0, openMenuCount - 1)
+        if openMenuCount == 0 {
+            timer.poke()
+        }
+    }
+
     /// Select a supplement panel to display
     func select(supplement: (any MediaPlayerSupplement)?, isGuest: Bool = false) {
         isGuestSupplement = isGuest
