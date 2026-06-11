@@ -210,8 +210,19 @@ extension VideoPlayer {
             .onChange(of: isPresentingOverlay) { _, isPresenting in
                 if isPresenting {
                     DispatchQueue.main.asyncAfter(deadline: .now() + AnimationTiming.skipIndicatorResetDelay) {
-                        focusGuide.transition(to: "sideButtons")
+                        // While paused the transport bar takes focus so a
+                        // center click resumes playback
+                        if manager.playbackRequestStatus == .paused {
+                            focusGuide.transition(to: "transportBar")
+                        } else {
+                            focusGuide.transition(to: "sideButtons")
+                        }
                     }
+                }
+            }
+            .onChange(of: manager.playbackRequestStatus) { _, status in
+                if status == .paused, isPresentingOverlay {
+                    focusGuide.transition(to: "transportBar")
                 }
             }
             .onReceive(onPressEvent) { press in

@@ -80,6 +80,9 @@ extension VideoPlayer.PlaybackControls {
                 bottom: "transportBar"
             )
             .isVisible(isScrubbing || isPresentingOverlay)
+            .onChange(of: focusedButton) { _, newValue in
+                containerState.isSideButtonsFocused = (newValue != nil)
+            }
         }
 
         private var isScrubbing: Bool {

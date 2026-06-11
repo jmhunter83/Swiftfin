@@ -313,6 +313,14 @@ class VideoPlayerContainerState: ObservableObject {
     /// Counted because a multi-child content builder fires once per child.
     private var openMenuCount = 0
 
+    /// Whether any transport menu popup is currently open
+    var isTransportMenuOpen: Bool {
+        openMenuCount > 0
+    }
+
+    /// Whether focus is on the side action buttons (audio/subtitles/episodes)
+    var isSideButtonsFocused: Bool = false
+
     /// Call from a transport menu's content `onAppear`. Holds the overlay
     /// visible while the menu popup is open.
     func menuContentDidAppear() {

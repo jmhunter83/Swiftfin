@@ -259,6 +259,20 @@ final class VideoPlayerContainerStateTests: XCTestCase {
         XCTAssertEqual(sut.overlayState, .hidden)
     }
 
+    func testIsTransportMenuOpenTracksAppearDisappear() {
+        XCTAssertFalse(sut.isTransportMenuOpen)
+
+        sut.menuContentDidAppear()
+        sut.menuContentDidAppear()
+        XCTAssertTrue(sut.isTransportMenuOpen)
+
+        sut.menuContentDidDisappear()
+        XCTAssertTrue(sut.isTransportMenuOpen)
+
+        sut.menuContentDidDisappear()
+        XCTAssertFalse(sut.isTransportMenuOpen)
+    }
+
     func testUnbalancedMenuDisappearDoesNotUnderflow() {
         sut = VideoPlayerContainerState(timerInterval: 0.05)
         sut.setOverlayVisible(true, animated: false)
