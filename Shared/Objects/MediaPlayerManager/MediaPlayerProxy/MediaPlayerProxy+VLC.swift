@@ -269,6 +269,18 @@ extension VLCMediaPlayerProxy {
                                 stateChangeHistory.removeFirst()
                             }
 
+                            // ended is terminal and VLC follows it with stopped almost
+                            // immediately, which cancels the debounced handler before it
+                            // can run. Handle it right away so autoplay/stop can fire.
+                            if state == .ended {
+                                stateDebounceTask?.cancel()
+                                lastReportedState = state
+                                guard !playbackItem.baseItem.isLiveStream else { return }
+                                manager.proxy?.isBuffering.value = false
+                                await manager.ended()
+                                return
+                            }
+
                             stateDebounceTask?.cancel()
                             stateDebounceTask = Task { @MainActor in
                                 try? await Task.sleep(for: .milliseconds(300))
@@ -302,11 +314,7 @@ extension VLCMediaPlayerProxy {
                                      .esAdded,
                                      .opening:
                                     manager.proxy?.isBuffering.value = true
-                                case .ended:
-                                    guard !playbackItem.baseItem.isLiveStream else { return }
-                                    manager.proxy?.isBuffering.value = false
-                                    await manager.ended()
-                                case .stopped: ()
+                                case .ended, .stopped: ()
                                 case .error:
                                     manager.proxy?.isBuffering.value = false
                                     await manager.error(ErrorMessage("VLC player is unable to perform playback"))
