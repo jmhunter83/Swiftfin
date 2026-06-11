@@ -134,7 +134,7 @@ extension VideoPlayer {
                 } label: {
                     PlaybackProgress()
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TimelineButtonStyle())
                 .focused($isProgressFocused)
 
                 Spacer()
@@ -375,5 +375,14 @@ extension VideoPlayer {
             case forward
             case backward
         }
+    }
+}
+
+/// Bare style for the timeline button: skips the system focus inversion
+/// so the orange playhead glow is the only focus indicator
+private struct TimelineButtonStyle: ButtonStyle {
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
     }
 }
