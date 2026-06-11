@@ -53,6 +53,9 @@ extension VideoPlayer {
         @State
         private var skipIndicatorResetTask: Task<Void, Never>?
 
+        @FocusState
+        private var isProgressFocused: Bool
+
         private var isPresentingOverlay: Bool {
             containerState.isPresentingOverlay
         }
@@ -124,15 +127,27 @@ extension VideoPlayer {
 
                 Spacer()
 
-                // Progress display
-                PlaybackProgress()
+                // Focusable timeline: center click toggles play/pause, so a
+                // paused video resumes with a click like the native player
+                Button {
+                    manager.togglePlayPause()
+                } label: {
+                    PlaybackProgress()
+                }
+                .buttonStyle(.plain)
+                .focused($isProgressFocused)
 
                 Spacer()
 
                 // Next episode button
                 NavigationBar.ActionButtons.PlayNextItem()
             }
-            .focusGuide(focusGuide, tag: "transportBar", top: "sideButtons")
+            .focusGuide(
+                focusGuide,
+                tag: "transportBar",
+                onContentFocus: { isProgressFocused = true },
+                top: "sideButtons"
+            )
         }
 
         @ViewBuilder

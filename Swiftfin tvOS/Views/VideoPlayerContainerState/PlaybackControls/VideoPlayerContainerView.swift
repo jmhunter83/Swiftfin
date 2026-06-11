@@ -131,7 +131,6 @@ extension VideoPlayer {
         private var cancellables: Set<AnyCancellable> = []
 
         private var isSwallowingMenuPress = false
-        private var isSwallowingSelectPress = false
 
         // MARK: - Focus Management
 
@@ -407,21 +406,6 @@ extension VideoPlayer {
                 containerState.userDidInteract()
             }
 
-            // While paused with the transport bar focused, Select resumes
-            // playback instead of activating the focused control - side
-            // buttons keep their menus usable while paused
-            if buttonPress.type == .select,
-               manager.state == .playback,
-               manager.playbackRequestStatus == .paused,
-               containerState.supplementState == .closed,
-               !containerState.isTransportMenuOpen,
-               !containerState.isSideButtonsFocused
-            {
-                manager.setPlaybackRequestStatus(status: .playing)
-                isSwallowingSelectPress = true
-                return
-            }
-
             // For Menu button: swallow press when overlay/supplement is visible
             if buttonPress.type == .menu,
                containerState.isPresentingOverlay || containerState.isPresentingSupplement
@@ -449,11 +433,6 @@ extension VideoPlayer {
                 return
             }
 
-            if buttonPress.type == .select, isSwallowingSelectPress {
-                isSwallowingSelectPress = false
-                return
-            }
-
             // Call super to allow UIKit focus navigation to work
             super.pressesEnded(presses, with: event)
         }
@@ -470,11 +449,6 @@ extension VideoPlayer {
             // For Menu button: swallow press if we swallowed the began event
             if buttonPress.type == .menu, isSwallowingMenuPress {
                 isSwallowingMenuPress = false
-                return
-            }
-
-            if buttonPress.type == .select, isSwallowingSelectPress {
-                isSwallowingSelectPress = false
                 return
             }
 

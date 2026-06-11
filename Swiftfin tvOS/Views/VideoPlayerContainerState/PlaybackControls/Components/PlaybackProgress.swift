@@ -12,6 +12,9 @@ extension VideoPlayer.PlaybackControls {
 
     struct PlaybackProgress: View {
 
+        @Environment(\.isFocused)
+        private var isFocused
+
         @EnvironmentObject
         private var manager: MediaPlayerManager
         @EnvironmentObject
@@ -25,20 +28,19 @@ extension VideoPlayer.PlaybackControls {
 
         var body: some View {
             VStack(spacing: 12) {
-                // Non-interactive progress bar
-                staticProgressBar
+                progressBar
 
                 // Timestamps
                 SplitTimeStamp()
             }
         }
 
-        private var staticProgressBar: some View {
+        private var progressBar: some View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     // Background track
                     Capsule()
-                        .fill(Color.white.opacity(0.2))
+                        .fill(Color.white.opacity(isFocused ? 0.35 : 0.2))
                         .frame(height: 6)
 
                     // Progress fill
@@ -46,15 +48,18 @@ extension VideoPlayer.PlaybackControls {
                         .fill(.white)
                         .frame(width: geometry.size.width * progress, height: 6)
 
-                    // Current position indicator (circle)
+                    // Current position indicator (circle), larger while the
+                    // timeline holds focus
                     Circle()
                         .fill(.white)
-                        .frame(width: 12, height: 12)
-                        .offset(x: geometry.size.width * progress - 6)
-                        .shadow(color: .black.opacity(0.3), radius: 2)
+                        .frame(width: isFocused ? 18 : 12, height: isFocused ? 18 : 12)
+                        .offset(x: geometry.size.width * progress - (isFocused ? 9 : 6))
+                        .shadow(color: .black.opacity(0.3), radius: isFocused ? 4 : 2)
                 }
+                .frame(height: 18)
             }
-            .frame(height: 12)
+            .frame(height: 18)
+            .animation(.spring(duration: 0.2), value: isFocused)
         }
     }
 }

@@ -318,9 +318,6 @@ class VideoPlayerContainerState: ObservableObject {
         openMenuCount > 0
     }
 
-    /// Whether focus is on the side action buttons (audio/subtitles/episodes)
-    var isSideButtonsFocused: Bool = false
-
     /// Call from a transport menu's content `onAppear`. Holds the overlay
     /// visible while the menu popup is open.
     func menuContentDidAppear() {
