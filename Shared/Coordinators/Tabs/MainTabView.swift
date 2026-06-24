@@ -26,6 +26,7 @@ struct MainTabView: View {
     @StateObject
     private var tabCoordinator = TabCoordinator {
         TabItem.home
+        TabItem.media
         TabItem.tv
         TabItem.library(
             title: L10n.movies,

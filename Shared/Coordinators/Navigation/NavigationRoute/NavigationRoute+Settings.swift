@@ -162,14 +162,6 @@ extension NavigationRoute {
         ConsoleView()
     }
 
-    #if os(tvOS)
-    static let media = NavigationRoute(
-        id: "media"
-    ) {
-        MediaView()
-    }
-    #endif
-
     static let playbackQualitySettings = NavigationRoute(
         id: "playbackQualitySettings"
     ) {

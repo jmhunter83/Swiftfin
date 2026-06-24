@@ -32,9 +32,6 @@ struct SettingsView: View {
     var body: some View {
         Form(image: .reefyLogo) {
             serverSection
-            #if os(tvOS)
-            librarySection
-            #endif
             videoPlayerSection
             customizationSection
             diagnosticsSection
@@ -95,18 +92,6 @@ struct SettingsView: View {
             .foregroundStyle(accentColor.overlayColor, accentColor)
         }
     }
-
-    // MARK: - Library Section
-
-    #if os(tvOS)
-    private var librarySection: some View {
-        Section(L10n.library) {
-            ChevronButton(L10n.media) {
-                router.route(to: .media)
-            }
-        }
-    }
-    #endif
 
     // MARK: - Video Player Section
 
