@@ -68,8 +68,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- **Expired Jellyfin sessions (#59)**: Repeated 401s are now tied to the exact runtime user/server session and confirmed with Jellyfin before sign-out. Expired users enter a dedicated password or Quick Connect recovery flow while all stored tokens remain intact until replacement succeeds.
-- **tvOS Media menu**: Restored Media to the main tvOS tab bar and removed the temporary Settings shortcut.
+(empty - ready for future work)
 
 ### Changed
 
@@ -78,6 +77,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Removed
 
 (empty - ready for future work)
+
+---
+
+## [1.4.3] - 2026-06-24
+
+### Fixed
+
+- **Expired Jellyfin sessions (#59)**: Repeated 401s are now tied to the exact runtime user/server session and confirmed with Jellyfin before sign-out. Expired users enter a dedicated password or Quick Connect recovery flow while all stored tokens remain intact until replacement succeeds.
+- **Subtitle persistence on autoplay**: The chosen subtitle track now carries over when the next episode auto-plays, instead of resetting to the server default until reselected.
+- **tvOS Media menu**: Restored Media to the main tvOS tab bar and removed the temporary Settings shortcut.
 
 ---
 
