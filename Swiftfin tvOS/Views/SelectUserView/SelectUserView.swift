@@ -48,13 +48,20 @@ struct SelectUserView: View {
     @State
     private var isPresentingLocalPin: Bool = false
     @State
-    private var isPresentingSessionExpired = false
+    private var didAttemptPendingReauthentication = false
 
     @StateObject
     private var viewModel = SelectUserViewModel()
 
     private var selectedServer: ServerState? {
         serverSelection.server(from: viewModel.servers.keys)
+    }
+
+    private var allUserItems: [UserItem] {
+        viewModel.servers
+            .flatMap { server, users in
+                users.map { UserItem(user: $0, server: server) }
+            }
     }
 
     private var splashScreenImageSources: [ImageSource] {
@@ -80,14 +87,10 @@ struct SelectUserView: View {
     private var userItems: [UserItem] {
         switch serverSelection {
         case .all:
-            return viewModel.servers
-                .map { server, users in
-                    users.map { (server: server, user: $0) }
-                }
-                .flatMap { $0 }
+            return allUserItems
                 .sorted(using: \.user.username)
                 .reversed()
-                .map { UserItem(user: $0.user, server: $0.server) }
+                .map { $0 }
         case let .server(id: id):
             guard let server = viewModel.servers.keys.first(where: { server in server.id == id }) else {
                 return []
@@ -111,12 +114,13 @@ struct SelectUserView: View {
     // MARK: - Select User(s)
 
     private func select(user: UserState, needsPin: Bool = true) {
-        // An empty token means the server revoked the session; a fresh one
-        // can only come from re-authentication since passwords aren't stored
-        guard user.accessToken.isNotEmpty else {
-            if let server = viewModel.servers.keys.first(where: { $0.id == user.serverID }) {
-                router.route(to: .userSignIn(server: server))
-            }
+        let identity = UserIdentity(user: user)
+        let requiresReauthentication =
+            user.accessToken.isEmpty ||
+            Defaults[.pendingReauthenticationIdentity] == identity
+
+        guard !requiresReauthentication else {
+            routeToReauthentication(user: user)
             return
         }
 
@@ -135,6 +139,51 @@ struct SelectUserView: View {
         }
 
         viewModel.signIn(user, pin: pin)
+    }
+
+    private func routeToReauthentication(user: UserState) {
+        guard let server = viewModel.servers.keys.first(where: { $0.id == user.serverID }) else { return }
+
+        Defaults[.pendingReauthenticationIdentity] = UserIdentity(user: user)
+        Defaults[.lastSessionExpiredUserID] = user.id
+
+        router.route(
+            to: .userSignIn(
+                server: server,
+                mode: .reauthenticate(user)
+            )
+        )
+    }
+
+    private func routePendingReauthenticationIfNeeded() {
+        guard !didAttemptPendingReauthentication else { return }
+
+        var identity = Defaults[.pendingReauthenticationIdentity]
+
+        if identity == nil, let legacyUserID = Defaults[.lastSessionExpiredUserID] {
+            identity = allUserItems
+                .first(where: { $0.user.id == legacyUserID })
+                .map { UserIdentity(user: $0.user) }
+
+            if let identity {
+                Defaults[.pendingReauthenticationIdentity] = identity
+            }
+        }
+
+        guard let identity else { return }
+        guard viewModel.servers.isNotEmpty else { return }
+
+        guard let item = allUserItems.first(where: {
+            $0.user.id == identity.userID && $0.server.id == identity.serverID
+        }) else {
+            Defaults[.pendingReauthenticationIdentity] = nil
+            Defaults[.lastSessionExpiredUserID] = nil
+            didAttemptPendingReauthentication = true
+            return
+        }
+
+        didAttemptPendingReauthentication = true
+        routeToReauthentication(user: item.user)
     }
 
     // MARK: - Grid Content View
@@ -295,16 +344,7 @@ struct SelectUserView: View {
         .navigationBarBranding()
         .onAppear {
             viewModel.getServers()
-
-            if Defaults[.lastSessionExpiredUserID] != nil {
-                Defaults[.lastSessionExpiredUserID] = nil
-                isPresentingSessionExpired = true
-            }
-        }
-        .alert(L10n.sessionExpired, isPresented: $isPresentingSessionExpired) {
-            Button(L10n.dismiss, role: .cancel) {}
-        } message: {
-            Text(L10n.sessionExpiredDescription)
+            routePendingReauthenticationIfNeeded()
         }
         .onChange(of: isEditingUsers) {
             guard !isEditingUsers else { return }
@@ -338,6 +378,8 @@ struct SelectUserView: View {
                     selectUserAllServersSplashscreen = .all
                 }
             }
+
+            routePendingReauthenticationIfNeeded()
         }
         .onReceive(viewModel.events) { event in
             switch event {

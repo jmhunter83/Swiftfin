@@ -119,6 +119,10 @@ extension Defaults.Keys {
     /// screen shows a one-time session expired message for them
     static let lastSessionExpiredUserID: Key<String?> = AppKey("lastSessionExpiredUserID")
 
+    /// Exact server/user identity that must authenticate again. Unlike the
+    /// legacy user-only marker, this remains set until a fresh token is saved.
+    static let pendingReauthenticationIdentity: Key<UserIdentity?> = AppKey("pendingReauthenticationIdentity")
+
     static let selectUserDisplayType: Key<LibraryDisplayType> = AppKey("selectUserDisplayType", default: .grid)
     static let selectUserOnLaunch: Key<Bool> = AppKey("selectUserOnLaunch", default: false)
     static let selectUserServerSelection: Key<SelectUserServerSelection> = AppKey("selectUserServerSelection", default: .all)

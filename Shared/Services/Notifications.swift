@@ -134,9 +134,9 @@ extension Notifications.Key {
         Key("didSignOut")
     }
 
-    /// The session client received repeated 401s - the stored token was
-    /// revoked server-side and the user must re-authenticate
-    static var didReceiveSessionUnauthorized: Key<Void> {
+    /// An authenticated session client received repeated 401s. The payload
+    /// identifies the exact runtime session that produced them.
+    static var didReceiveSessionUnauthorized: Key<SessionUnauthorizedEvent> {
         Key("didReceiveSessionUnauthorized")
     }
 

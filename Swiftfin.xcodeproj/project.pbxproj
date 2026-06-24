@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		08BEEA4E5F77A74D7B6FE59F /* VideoPlayerContainerStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DAEE9EF7528B67B93A71FB1 /* VideoPlayerContainerStateTests.swift */; };
+		1A4C82612E55315C00A11F59 /* SessionExpiryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A4C82602E55315C00A11F59 /* SessionExpiryTests.swift */; };
 		53ABFDDC267972BF00886593 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53ABFDDB267972BF00886593 /* TVServices.framework */; };
 		62666DFA27E5013700EC0ECD /* TVVLCKit.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 625CB57D2678E81E00530A6E /* TVVLCKit.xcframework */; };
 		62666DFB27E5013700EC0ECD /* TVVLCKit.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 625CB57D2678E81E00530A6E /* TVVLCKit.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -137,6 +138,7 @@
 		628B95232670CABD0091AF3B /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		637FCAF3287B5B2600C0A353 /* UDPBroadcast.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = UDPBroadcast.xcframework; path = Carthage/Build/UDPBroadcast.xcframework; sourceTree = "<group>"; };
 		6C1438DC36A93916AACE477B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		1A4C82602E55315C00A11F59 /* SessionExpiryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionExpiryTests.swift; sourceTree = "<group>"; };
 		796E798440A8807BC2883549 /* Swiftfin tvOS Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Swiftfin tvOS Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MediaErrorTests.swift; sourceTree = "<group>"; };
 		E1B2AB9628808CDF0072B3B9 /* GoogleCast.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = GoogleCast.xcframework; path = Carthage/Build/GoogleCast.xcframework; sourceTree = "<group>"; };
@@ -354,6 +356,7 @@
 			isa = PBXGroup;
 			children = (
 				5DAEE9EF7528B67B93A71FB1 /* VideoPlayerContainerStateTests.swift */,
+				1A4C82602E55315C00A11F59 /* SessionExpiryTests.swift */,
 				1279A92061D12F3D7D8B6C9E /* NetworkErrorTests.swift */,
 				B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */,
 				E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */,
@@ -642,6 +645,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				08BEEA4E5F77A74D7B6FE59F /* VideoPlayerContainerStateTests.swift in Sources */,
+				1A4C82612E55315C00A11F59 /* SessionExpiryTests.swift in Sources */,
 				B6FD5626C1D953D86DA73199 /* NetworkErrorTests.swift in Sources */,
 				6C6178530A261AC4FD50E4DC /* MediaErrorTests.swift in Sources */,
 				EE9A94A7172E4DA099EED926 /* MediaPlayerItemAudioSelectionTests.swift in Sources */,
@@ -695,7 +699,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 8NFQ3695PG;
-				ENABLE_PREVIEWS = YES;
+				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_PREVIEWS = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "Swiftfin tvOS/Resources/Info.plist";
@@ -725,7 +730,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 8NFQ3695PG;
-				ENABLE_PREVIEWS = YES;
+				ENABLE_PREVIEWS = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "Swiftfin tvOS/Resources/Info.plist";

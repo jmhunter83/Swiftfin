@@ -62,12 +62,10 @@ extension UserState {
         }
     }
 
-    /// The device ID this user's token is bound to server-side. Generated at
-    /// sign-in and used for both the authentication request and all session
-    /// clients - a mismatch gets the token rejected or revoked (401 on user
-    /// switch). Falls back to the legacy derived ID for users stored before
-    /// per-user IDs were persisted, so their working tokens keep the exact
-    /// device ID they've been presented with.
+    /// The device ID associated with this user's Jellyfin sessions. Generated
+    /// at sign-in and reused for reauthentication so the server updates the
+    /// same device record. Falls back to the legacy derived ID for users stored
+    /// before per-user IDs were persisted.
     var deviceID: String {
         get {
             let keychain = Container.shared.keychainService()
@@ -191,10 +189,13 @@ extension UserState {
     /// with an access token
     func getUserData(server: ServerState) async throws -> UserDto {
         let client = JellyfinClient(
-            configuration: .swiftfinConfiguration(url: server.currentURL, deviceID: deviceID),
+            configuration: .swiftfinConfiguration(
+                url: server.currentURL,
+                deviceID: deviceID,
+                accessToken: accessToken
+            ),
             sessionConfiguration: .swiftfin,
-            sessionDelegate: URLSessionProxyDelegate(logger: NetworkLogger.swiftfin()),
-            accessToken: accessToken
+            sessionDelegate: URLSessionProxyDelegate(logger: NetworkLogger.swiftfin())
         )
 
         let request = Paths.getCurrentUser

@@ -9,35 +9,96 @@
 import CoreStore
 import Defaults
 import Factory
+import Get
 import JellyfinAPI
 import Logging
 import Pulse
 
+enum SessionAuthorizationStatus: Equatable {
+    case valid
+    case unauthorized
+    case inconclusive
+
+    static func from(error: Error?) -> Self {
+        guard let error else { return .valid }
+
+        if case let .unacceptableStatusCode(statusCode) = error as? APIError,
+           statusCode == 401
+        {
+            return .unauthorized
+        }
+
+        return .inconclusive
+    }
+}
+
 final class UserSession {
 
     let client: JellyfinClient
+    let id: UUID
+    let identity: UserIdentity
     let server: ServerState
     let user: UserState
+
+    var hasUsableAccessToken: Bool {
+        accessToken.isNotEmpty
+    }
+
+    private let accessToken: String
+    private let deviceID: String
 
     init(
         server: ServerState,
         user: UserState
     ) {
+        let sessionID = UUID()
+        let identity = UserIdentity(serverID: server.id, userID: user.id)
+        let accessToken = user.accessToken
+        let deviceID = user.deviceID
+
+        self.id = sessionID
+        self.identity = identity
         self.server = server
         self.user = user
+        self.accessToken = accessToken
+        self.deviceID = deviceID
 
         let client = JellyfinClient(
             configuration: .swiftfinConfiguration(
                 url: server.currentURL,
-                deviceID: user.deviceID,
-                accessToken: user.accessToken
+                deviceID: deviceID,
+                accessToken: accessToken
             ),
-            delegate: SessionUnauthorizedDelegate(),
+            delegate: SessionUnauthorizedDelegate(
+                event: .init(
+                    sessionID: sessionID,
+                    identity: identity
+                )
+            ),
             sessionConfiguration: .swiftfin,
             sessionDelegate: URLSessionProxyDelegate(logger: NetworkLogger.swiftfin())
         )
 
         self.client = client
+    }
+
+    func confirmAuthorization() async -> SessionAuthorizationStatus {
+        let validationClient = JellyfinClient(
+            configuration: .swiftfinConfiguration(
+                url: server.currentURL,
+                deviceID: deviceID,
+                accessToken: accessToken
+            ),
+            sessionConfiguration: .swiftfin,
+            sessionDelegate: URLSessionProxyDelegate(logger: NetworkLogger.swiftfin())
+        )
+
+        do {
+            _ = try await validationClient.send(Paths.getCurrentUser)
+            return .valid
+        } catch {
+            return .from(error: error)
+        }
     }
 }
 

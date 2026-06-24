@@ -39,17 +39,14 @@ extension JellyfinClient {
 extension JellyfinClient.Configuration {
 
     /// A device ID for a new user, unique so each Jellyfin user gets a distinct
-    /// (client, deviceID) pair. Tokens are bound server-side to the device ID
-    /// that authenticated, and a new authentication on an already-used device ID
-    /// invalidates the tokens issued to it - sharing one ID across users breaks
-    /// whoever signed in before.
+    /// device record and can reuse that record during future reauthentication.
     static func generateDeviceID() -> String {
         "\(UIDevice.platform)_\(UUID().uuidString)"
     }
 
-    /// Configuration for server communication. `deviceID` must be the user's
-    /// stored device ID for any authenticated client; nil uses the install-wide
-    /// base ID and is only for public, unauthenticated endpoints.
+    /// Configuration for server communication. Authenticated clients use the
+    /// user's stored device ID to preserve their Jellyfin device record. Nil
+    /// uses the install-wide base ID for public, unauthenticated endpoints.
     static func swiftfinConfiguration(
         url: URL,
         deviceID: String? = nil,

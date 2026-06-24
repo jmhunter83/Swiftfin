@@ -68,7 +68,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-(empty - ready for future work)
+- **Expired Jellyfin sessions (#59)**: Repeated 401s are now tied to the exact runtime user/server session and confirmed with Jellyfin before sign-out. Expired users enter a dedicated password or Quick Connect recovery flow while all stored tokens remain intact until replacement succeeds.
+- **tvOS Media menu**: Restored Media to the main tvOS tab bar and removed the temporary Settings shortcut.
 
 ### Changed
 
@@ -96,7 +97,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **TV section focus traversal**: Pressing Up from the top row of the TV Shows or Live TV library now returns focus to the section picker instead of getting stuck (#52)
 - **AppLoadingView migration errors**: All six hardcoded English strings now route through L10n for translation
 - **Authentication path force-unwraps**: Replaced `userSession!` and `authenticationAction!` force-unwraps with safe `requireSession()` and guard patterns across 25 files and 84 sites — no more crashes if state ever diverges
-- **User switching returns 401 (#57)**: All users on one install were sharing a single Jellyfin `DeviceID`, so signing in as a second user invalidated the first user's token server-side. Device ID is now per-user, so each Jellyfin user gets a stable identity and tokens coexist across user switches
+- **Per-user Jellyfin device records (#57)**: Each saved user now keeps a stable `DeviceID`, including across reauthentication, instead of sharing the install-wide identifier
 - **Add Server hangs on duplicate / migration**: Connecting to a server that already exists in the app (same Jellyfin ID, e.g., after a server migration with a new URL) left the form stuck on "Connecting" forever. The view now resets to its idle state when the duplicate-server alert appears, so Dismiss and Add URL both behave cleanly
 - **Two spinners on Add Server**: Two `ProgressView` instances were rendering from the same loading flag during a connect. Now one spinner
 

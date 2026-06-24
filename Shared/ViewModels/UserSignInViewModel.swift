@@ -27,6 +27,16 @@ import SwiftUI
 // Note: UserDto in StoredValues so that it doesn't need to be passed
 //       around along with the user UserState. Was just easy
 
+enum UserSignInMode: Hashable {
+    case addUser
+    case reauthenticate(UserState)
+
+    var reauthenticationTarget: UserState? {
+        guard case let .reauthenticate(user) = self else { return nil }
+        return user
+    }
+}
+
 @MainActor
 @Stateful
 final class UserSignInViewModel: ViewModel {
@@ -98,25 +108,33 @@ final class UserSignInViewModel: ViewModel {
     @Published
     private(set) var serverDisclaimer: String? = nil
 
+    let mode: UserSignInMode
     let server: ServerState
 
-    /// Device ID for the current sign-in attempt. The token Jellyfin issues is
-    /// bound to the device ID that authenticates, so the same ID must be used
-    /// for the auth request and stored for the user's session clients.
+    var requiresAutomaticCredentialReplacement: Bool {
+        mode.reauthenticationTarget != nil
+    }
+
+    /// Device ID for the current sign-in attempt. Reauthentication reuses the
+    /// saved ID so Jellyfin updates the user's existing device record.
     private(set) var signInDeviceID: String = JellyfinClient.Configuration.generateDeviceID()
     private var signInClient: JellyfinClient?
 
-    init(server: ServerState) {
+    init(server: ServerState, mode: UserSignInMode = .addUser) {
+        self.mode = mode
         self.server = server
         super.init()
     }
 
-    /// Builds the client for the next authentication attempt around a freshly
-    /// generated device ID. Regenerated per attempt so two different users
-    /// signing in through this view model never share a device server-side.
+    /// Builds the client for the next authentication attempt. Add User gets a
+    /// fresh device ID; reauthentication reuses the target user's saved ID.
     @discardableResult
     func prepareSignInClient() -> JellyfinClient {
-        signInDeviceID = JellyfinClient.Configuration.generateDeviceID()
+        if let target = mode.reauthenticationTarget {
+            signInDeviceID = target.deviceID
+        } else {
+            signInDeviceID = JellyfinClient.Configuration.generateDeviceID()
+        }
 
         let client = JellyfinClient(
             configuration: .swiftfinConfiguration(
@@ -166,6 +184,8 @@ final class UserSignInViewModel: ViewModel {
             throw ErrorMessage(L10n.unknownError)
         }
 
+        try validateReauthenticationResponse(serverID: response.serverID, userID: id)
+
         if let existingUser = existingUser(id: id) {
             events.send(.existingUser(((existingUser, accessToken, signInDeviceID), userData)))
         } else {
@@ -197,6 +217,8 @@ final class UserSignInViewModel: ViewModel {
             throw ErrorMessage(L10n.unknownError)
         }
 
+        try validateReauthenticationResponse(serverID: response.serverID, userID: id)
+
         if let existingUser = existingUser(id: id) {
             events.send(.existingUser(((existingUser, accessToken, signInDeviceID), userData)))
         } else {
@@ -213,8 +235,20 @@ final class UserSignInViewModel: ViewModel {
     private func existingUser(id: String) -> UserState? {
         try? SwiftfinStore
             .dataStack
-            .fetchOne(From<UserModel>().where(\.$id == id))?
+            .fetchAll(From<UserModel>().where(\.$id == id))
+            .first(where: { $0.server?.id == server.id })?
             .state
+    }
+
+    func validateReauthenticationResponse(serverID: String?, userID: String) throws {
+        guard let target = mode.reauthenticationTarget else { return }
+
+        guard target.serverID == server.id,
+              serverID == server.id,
+              userID == target.id
+        else {
+            throw ErrorMessage(L10n.unauthorizedUser)
+        }
     }
 
     @Function(\Action.Cases.save)
@@ -301,6 +335,12 @@ final class UserSignInViewModel: ViewModel {
         if replaceForAccessToken {
             user.state.state.accessToken = user.state.accessToken
             user.state.state.deviceID = user.state.deviceID
+
+            guard user.state.state.accessToken == user.state.accessToken,
+                  user.state.state.deviceID == user.state.deviceID
+            else {
+                throw ErrorMessage(L10n.unknownError)
+            }
         }
 
         events.send(.saved(user.state.state))

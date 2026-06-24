@@ -48,9 +48,16 @@ struct UserSignInView: View {
     private var viewModel: UserSignInViewModel
 
     private let logger = Logger.swiftfin()
+    private let mode: UserSignInMode
 
-    init(server: ServerState) {
-        self._viewModel = StateObject(wrappedValue: UserSignInViewModel(server: server))
+    init(
+        server: ServerState,
+        mode: UserSignInMode = .addUser
+    ) {
+        self.mode = mode
+        self._accessPolicy = State(initialValue: mode.reauthenticationTarget?.accessPolicy ?? .none)
+        self._username = State(initialValue: mode.reauthenticationTarget?.username ?? "")
+        self._viewModel = StateObject(wrappedValue: UserSignInViewModel(server: server, mode: mode))
     }
 
     private func handleEvent(_ event: UserSignInViewModel._Event) {
@@ -71,10 +78,22 @@ struct UserSignInView: View {
                 evaluatedPolicyMap: .init(action: processEvaluatedPolicy)
             )
         case let .existingUser(existingUser):
-            self.existingUser = existingUser
-            self.isPresentingExistingUser = true
+            if viewModel.requiresAutomaticCredentialReplacement {
+                saveExisting(existingUser, replaceAccessToken: true)
+            } else {
+                self.existingUser = existingUser
+                self.isPresentingExistingUser = true
+            }
         case let .saved(user):
             UIDevice.feedback(.success)
+
+            if let target = mode.reauthenticationTarget,
+               target.id == user.id,
+               target.serverID == user.serverID
+            {
+                Defaults[.pendingReauthenticationIdentity] = nil
+                Defaults[.lastSessionExpiredUserID] = nil
+            }
 
             router.dismiss()
             Defaults[.lastSignedInUserID] = .signedIn(userID: user.id)
@@ -82,6 +101,27 @@ struct UserSignInView: View {
             Container.shared.currentUserSession.reset()
             Notifications[.didSignIn].post()
         }
+    }
+
+    private func saveExisting(
+        _ user: UserSignInViewModel.UserStateDataPair,
+        replaceAccessToken: Bool
+    ) {
+        guard let authenticationAction else { return }
+
+        let userState = user.state.state
+        let accessPolicy = userState.accessPolicy
+
+        viewModel.saveExisting(
+            user: user,
+            replaceForAccessToken: replaceAccessToken,
+            authenticationAction: (
+                authenticationAction,
+                accessPolicy,
+                accessPolicy.authenticateReason(user: userState)
+            ),
+            evaluatedPolicyMap: .init(action: processEvaluatedPolicy)
+        )
     }
 
     private func runQuickConnect() {
@@ -122,11 +162,21 @@ struct UserSignInView: View {
 
     @ViewBuilder
     private var signInSection: some View {
+        if mode.reauthenticationTarget != nil {
+            Section {
+                Label(L10n.sessionExpiredDescription, systemImage: "exclamationmark.circle.fill")
+                    .labelStyle(.sectionFooterWithImage(imageStyle: .orange))
+            } header: {
+                Text(L10n.sessionExpired)
+            }
+        }
+
         Section {
             TextField(L10n.username, text: $username)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .focused($focusedTextField, equals: .username)
+                .disabled(mode.reauthenticationTarget != nil)
                 .onSubmit {
                     focusedTextField = .password
                 }
@@ -217,32 +267,19 @@ struct UserSignInView: View {
 
     // MARK: - Public Users Section
 
+    @ViewBuilder
     private var publicUsersSection: some View {
-        Section(L10n.publicUsers) {
-            if viewModel.publicUsers.isEmpty {
-                Text(L10n.noPublicUsers)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            } else {
-                #if os(iOS)
-                ForEach(viewModel.publicUsers) { user in
-                    PublicUserRow(
-                        user: user,
-                        client: viewModel.server.client
-                    ) {
-                        username = user.name ?? ""
-                        password = ""
-                        focusedTextField = .password
-                    }
-                }
-                #else
-                LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible()), count: 4),
-                    spacing: 30
-                ) {
+        if mode.reauthenticationTarget == nil {
+            Section(L10n.publicUsers) {
+                if viewModel.publicUsers.isEmpty {
+                    Text(L10n.noPublicUsers)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                } else {
+                    #if os(iOS)
                     ForEach(viewModel.publicUsers) { user in
-                        PublicUserButton(
+                        PublicUserRow(
                             user: user,
                             client: viewModel.server.client
                         ) {
@@ -250,13 +287,29 @@ struct UserSignInView: View {
                             password = ""
                             focusedTextField = .password
                         }
-                        .environment(\.isOverComplexContent, true)
                     }
+                    #else
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible()), count: 4),
+                        spacing: 30
+                    ) {
+                        ForEach(viewModel.publicUsers) { user in
+                            PublicUserButton(
+                                user: user,
+                                client: viewModel.server.client
+                            ) {
+                                username = user.name ?? ""
+                                password = ""
+                                focusedTextField = .password
+                            }
+                            .environment(\.isOverComplexContent, true)
+                        }
+                    }
+                    #endif
                 }
-                #endif
             }
+            .disabled(viewModel.state == .signingIn)
         }
-        .disabled(viewModel.state == .signingIn)
     }
 
     @ViewBuilder
@@ -276,13 +329,15 @@ struct UserSignInView: View {
                 ProgressView()
             }
 
-            Button(L10n.security, systemImage: "gearshape.fill") {
-                router.route(
-                    to: .userSecurity(
-                        pinHint: $pinHint,
-                        accessPolicy: $accessPolicy
+            if mode.reauthenticationTarget == nil {
+                Button(L10n.security, systemImage: "gearshape.fill") {
+                    router.route(
+                        to: .userSecurity(
+                            pinHint: $pinHint,
+                            accessPolicy: $accessPolicy
+                        )
                     )
-                )
+                }
             }
         }
         #else
@@ -305,7 +360,7 @@ struct UserSignInView: View {
             .interactiveDismissDisabled(viewModel.state == .signingIn)
             .onReceive(viewModel.events, perform: handleEvent)
             .onFirstAppear {
-                focusedTextField = .username
+                focusedTextField = mode.reauthenticationTarget == nil ? .username : .password
                 viewModel.getPublicData()
             }
             .alert(
@@ -313,40 +368,12 @@ struct UserSignInView: View {
                 isPresented: $isPresentingExistingUser,
                 presenting: existingUser
             ) { existingUser in
-
-                let userState = existingUser.state.state
-                let existingUserAccessPolicy = userState.accessPolicy
-
                 Button(L10n.signIn) {
-                    guard let authenticationAction else { return }
-                    viewModel.saveExisting(
-                        user: existingUser,
-                        replaceForAccessToken: false,
-                        authenticationAction: (
-                            authenticationAction,
-                            existingUserAccessPolicy,
-                            existingUserAccessPolicy.authenticateReason(
-                                user: userState
-                            )
-                        ),
-                        evaluatedPolicyMap: .init(action: processEvaluatedPolicy)
-                    )
+                    saveExisting(existingUser, replaceAccessToken: false)
                 }
 
                 Button(L10n.replace) {
-                    guard let authenticationAction else { return }
-                    viewModel.saveExisting(
-                        user: existingUser,
-                        replaceForAccessToken: true,
-                        authenticationAction: (
-                            authenticationAction,
-                            existingUserAccessPolicy,
-                            existingUserAccessPolicy.authenticateReason(
-                                user: userState
-                            )
-                        ),
-                        evaluatedPolicyMap: .init(action: processEvaluatedPolicy)
-                    )
+                    saveExisting(existingUser, replaceAccessToken: true)
                 }
 
                 Button(L10n.dismiss, role: .cancel)
