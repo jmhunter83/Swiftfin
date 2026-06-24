@@ -169,7 +169,11 @@ extension VLCMediaPlayerProxy {
                 } else {
                     configuration.audioIndex = .auto
                 }
-                configuration.subtitleIndex = .absolute(mediaSource.defaultSubtitleStreamIndex ?? -1)
+                if let index = item.selectedSubtitleStreamIndex {
+                    configuration.subtitleIndex = .absolute(index)
+                } else {
+                    configuration.subtitleIndex = .absolute(mediaSource.defaultSubtitleStreamIndex ?? -1)
+                }
             }
 
             configuration.subtitleSize = .absolute(25 - Defaults[.VideoPlayer.Subtitle.subtitleSize])
