@@ -337,7 +337,11 @@ extension VLCMediaPlayerProxy {
                             }
                         }
                     }
-                    .onReceive(manager.$playbackItem) { playbackItem in
+                    // dropFirst: the publisher replays the current item on subscribe,
+                    // but the view's own init already created a player for it -
+                    // reacting to the replay built and threw away a whole second
+                    // VLC instance on every playback start
+                    .onReceive(manager.$playbackItem.dropFirst()) { playbackItem in
                         // Reset state tracking when item changes to prevent stale
                         // ended/stopped events from the old item from firing
                         lastReportedState = nil

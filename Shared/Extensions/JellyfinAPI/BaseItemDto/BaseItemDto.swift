@@ -152,7 +152,11 @@ extension BaseItemDto {
             .posterStyle(preferredPosterDisplayType)
             .frame(width: 400)
 
-            return ImageRenderer(content: failedSystemContentView).uiImage
+            // Opaque: artwork has no transparency and the system logs an
+            // error when handed an alpha channel it has to strip
+            let renderer = ImageRenderer(content: failedSystemContentView)
+            renderer.isOpaque = true
+            return renderer.uiImage
         }
 
         let image = Image(uiImage: firstImage)
@@ -166,7 +170,9 @@ extension BaseItemDto {
         .posterAspectRatio(preferredPosterDisplayType, contentMode: .fit)
         .frame(width: 400)
 
-        return ImageRenderer(content: transformedImage).uiImage
+        let renderer = ImageRenderer(content: transformedImage)
+        renderer.isOpaque = true
+        return renderer.uiImage
     }
 
     func getPlaybackItemProvider(
