@@ -114,6 +114,13 @@ final class MediaPlayerManager: ViewModel {
 
     @Published
     private(set) var item: BaseItemDto
+
+    /// One-way latch set by the first stop. The declared transition
+    /// guards don't block actions racing a stop (a late ended/autoplay
+    /// can still run), so teardown checks this instead of state.
+    @Published
+    private(set) var isStopping = false
+
     @Published
     private(set) var playbackError: Error? = nil
     @Published
@@ -213,6 +220,9 @@ final class MediaPlayerManager: ViewModel {
 
     @Function(\Action.Cases.ended)
     private func _ended() async throws {
+        // An in-flight stop wins over autoplay
+        guard !isStopping else { return }
+
         // Capture the current item ID and next item at the time ended is called.
         // This MUST happen before any async operations because playNewItem()
         // will trigger queue updates that clear nextItem before we can use it.
@@ -316,10 +326,18 @@ final class MediaPlayerManager: ViewModel {
 
     @Function(\Action.Cases.playNewItem)
     private func _playNewItem(_ provider: MediaPlayerItemProvider) async throws {
+        guard !isStopping else { return }
+
         item = provider.item
         setSupplements()
         proxy?.stop()
-        playbackItem = try await provider()
+        let newItem = try await provider()
+
+        // A stop may have arrived during the provider await; a cancelled
+        // task still runs to completion past the continuation, so check
+        // again before handing the item to the player
+        guard !isStopping else { return }
+        playbackItem = newItem
     }
 
     @Function(\Action.Cases.setPlaybackRequestStatus)
@@ -355,6 +373,9 @@ final class MediaPlayerManager: ViewModel {
 
     @Function(\Action.Cases.stop)
     private func _stop() async throws {
+        guard !isStopping else { return }
+        isStopping = true
+
         await self.cancel()
 
         // TODO: remove playback item?

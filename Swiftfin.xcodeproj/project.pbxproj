@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		08BEEA4E5F77A74D7B6FE59F /* VideoPlayerContainerStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DAEE9EF7528B67B93A71FB1 /* VideoPlayerContainerStateTests.swift */; };
+		0A3F51C88B2D4E76A19C05D3 /* MediaPlayerManagerStopTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D82E4B95C1F4A308E67F2A4 /* MediaPlayerManagerStopTests.swift */; };
 		1A4C82612E55315C00A11F59 /* SessionExpiryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A4C82602E55315C00A11F59 /* SessionExpiryTests.swift */; };
 		53ABFDDC267972BF00886593 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53ABFDDB267972BF00886593 /* TVServices.framework */; };
 		62666DFA27E5013700EC0ECD /* TVVLCKit.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 625CB57D2678E81E00530A6E /* TVVLCKit.xcframework */; };
@@ -106,6 +107,7 @@
 		5362E4C8267D40F7000E2F71 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		53ABFDDB267972BF00886593 /* TVServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = TVServices.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS15.0.sdk/System/Library/Frameworks/TVServices.framework; sourceTree = DEVELOPER_DIR; };
 		5DAEE9EF7528B67B93A71FB1 /* VideoPlayerContainerStateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VideoPlayerContainerStateTests.swift; sourceTree = "<group>"; };
+		7D82E4B95C1F4A308E67F2A4 /* MediaPlayerManagerStopTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MediaPlayerManagerStopTests.swift; sourceTree = "<group>"; };
 		625CB57D2678E81E00530A6E /* TVVLCKit.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = TVVLCKit.xcframework; path = Carthage/Build/TVVLCKit.xcframework; sourceTree = "<group>"; };
 		62666E0027E5016900EC0ECD /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		62666E0527E5017A00EC0ECD /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
@@ -361,6 +363,7 @@
 				B7283F82B960F951ABA41CDC /* MediaErrorTests.swift */,
 				E7A76CCB37BC4FF39B1EB2B2 /* MediaPlayerItemAudioSelectionTests.swift */,
 				4712E53657E4461A171B8ABB /* MediaPlayerItemSubtitleSelectionTests.swift */,
+				7D82E4B95C1F4A308E67F2A4 /* MediaPlayerManagerStopTests.swift */,
 			);
 			path = "Swiftfin tvOS Tests";
 			sourceTree = "<group>";
@@ -650,6 +653,7 @@
 				6C6178530A261AC4FD50E4DC /* MediaErrorTests.swift in Sources */,
 				EE9A94A7172E4DA099EED926 /* MediaPlayerItemAudioSelectionTests.swift in Sources */,
 				FF694D22CA58029985D11FE0 /* MediaPlayerItemSubtitleSelectionTests.swift in Sources */,
+				0A3F51C88B2D4E76A19C05D3 /* MediaPlayerManagerStopTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
