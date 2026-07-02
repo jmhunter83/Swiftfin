@@ -248,7 +248,7 @@ extension VLCMediaPlayerProxy {
         }
 
         var body: some View {
-            if let playbackItem = manager.playbackItem, manager.state != .stopped {
+            if let playbackItem = manager.playbackItem, manager.state != .stopped, !manager.isStopping {
                 VLCVideoPlayer(configuration: vlcConfiguration(for: playbackItem))
                     .proxy(proxy)
                     .onSecondsUpdated { newSeconds, info in
@@ -345,6 +345,10 @@ extension VLCMediaPlayerProxy {
                         consecutiveBufferingCount = 0
 
                         guard let playbackItem else { return }
+
+                        // Never spin up a new player during teardown; stopping a
+                        // mid-open VLC player blocks the main thread
+                        guard manager.state != .stopped, !manager.isStopping else { return }
                         proxy.playNewMedia(vlcConfiguration(for: playbackItem))
                     }
                     .backport
