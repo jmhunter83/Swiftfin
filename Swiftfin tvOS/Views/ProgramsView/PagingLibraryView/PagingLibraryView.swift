@@ -18,8 +18,6 @@ struct PagingLibraryView<Element: Poster & Identifiable>: View {
 
     @Default(.Customization.Library.cinematicBackground)
     private var cinematicBackground
-    @Default(.Customization.Library.enabledDrawerFilters)
-    private var enabledDrawerFilters
     @Default(.Customization.Library.rememberLayout)
     private var rememberLayout
 
@@ -282,45 +280,25 @@ struct PagingLibraryView<Element: Poster & Identifiable>: View {
     // MARK: Content View
 
     private var contentView: some View {
+        VStack(spacing: 0) {
+            if let filterViewModel = viewModel.filterViewModel {
+                FilterBar(viewModel: filterViewModel)
+                    .padding(.top, 40)
+                    .padding(.horizontal, 50)
+            }
 
-        innerContent
-            // These exist here to alleviate type-checker issues
-                .onChange(of: posterType) {
-                    setCustomLayout()
-                }
-                .onChange(of: displayType) {
-                    setCustomLayout()
-                }
-                .onChange(of: listColumnCount) {
-                    setCustomLayout()
-                }
-
-        // Logic for LetterPicker. Enable when ready
-
-        /* if letterPickerEnabled, let filterViewModel = viewModel.filterViewModel {
-             ZStack(alignment: letterPickerOrientation.alignment) {
-                 innerContent
-                     .padding(letterPickerOrientation.edge, LetterPickerBar.size + 10)
-                     .frame(maxWidth: .infinity)
-
-                 LetterPickerBar(viewModel: filterViewModel)
-                     .padding(.top, safeArea.top)
-                     .padding(.bottom, safeArea.bottom)
-                     .padding(letterPickerOrientation.edge, 10)
-             }
-         } else {
             innerContent
-         }
-         // These exist here to alleviate type-checker issues
-         .onChange(of: posterType) {
-             setCustomLayout()
-         }
-         .onChange(of: displayType) {
-             setCustomLayout()
-         }
-         .onChange(of: listColumnCount) {
-             setCustomLayout()
-         }*/
+        }
+        // These exist here to alleviate type-checker issues
+        .onChange(of: posterType) {
+            setCustomLayout()
+        }
+        .onChange(of: displayType) {
+            setCustomLayout()
+        }
+        .onChange(of: listColumnCount) {
+            setCustomLayout()
+        }
     }
 
     // MARK: Body
