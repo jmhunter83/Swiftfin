@@ -326,6 +326,16 @@ extension VLCMediaPlayerProxy {
                                     consecutiveBufferingCount = 0
                                     lastPlayingTime = Date()
                                     manager.proxy?.isBuffering.value = false
+
+                                    // current index -1 with tracks available means VLC muted
+                                    // the audio because our requested index didn't match (#61)
+                                    let audioTracks = info.audioTracks
+                                        .map { "\($0.index):\($0.title)" }
+                                        .joined(separator: ", ")
+                                    manager.logger.trace(
+                                        "VLC audio tracks: [\(audioTracks)], current: \(info.currentAudioTrack.index)"
+                                    )
+
                                     await manager.setPlaybackRequestStatus(status: .playing)
                                 case .paused:
                                     await manager.setPlaybackRequestStatus(status: .paused)
