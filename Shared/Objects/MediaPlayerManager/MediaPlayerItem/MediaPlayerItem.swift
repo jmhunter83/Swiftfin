@@ -123,14 +123,20 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
 
         // Select audio stream based on user's preferred language, falling back to server default,
         // then first available audio track. Avoid using -1 for audio, as VLC treats it as disabled.
+        // defaultAudioStreamIndex is in server index space; map by position within the audio
+        // list like initialSubtitleStreamIndex does.
         let preferredLanguage = Defaults[.VideoPlayer.Audio.preferredLanguage]
+        let originalAudioStreams = (mediaSource.mediaStreams ?? [])
+            .filter { $0.type == .audio && !($0.isExternal ?? false) }
+
         if let preferredStream = audioStreams.first(where: { $0.language?.lowercased() == preferredLanguage.lowercased() }) {
             selectedAudioStreamIndex = preferredStream.index
         } else if let defaultIndex = mediaSource.defaultAudioStreamIndex,
                   defaultIndex >= 0,
-                  audioStreams.contains(where: { $0.index == defaultIndex })
+                  let position = originalAudioStreams.firstIndex(where: { $0.index == defaultIndex }),
+                  position < audioStreams.count
         {
-            selectedAudioStreamIndex = defaultIndex
+            selectedAudioStreamIndex = audioStreams[position].index
         } else {
             selectedAudioStreamIndex = audioStreams.first?.index
         }
@@ -192,6 +198,30 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
         }
 
         return mediaSource.defaultSubtitleStreamIndex ?? -1
+    }
+
+    /// The VLC track index for an audio stream in the adjusted index space.
+    ///
+    /// VLC numbers tracks by container order, while `adjustedTrackIndexes`
+    /// renumbers internal tracks video-first. Files with audio as the first
+    /// track (common in iTunes-style MP4s) would otherwise request a track
+    /// VLC doesn't have, which silently disables audio (#61). Transcoded
+    /// streams are muxed video-first by the server, so the adjusted index
+    /// already matches.
+    func vlcAudioTrackIndex(forAdjustedIndex adjustedIndex: Int?) -> Int? {
+        guard let adjustedIndex else { return nil }
+        guard mediaSource.transcodingURL == nil else { return adjustedIndex }
+
+        guard let position = audioStreams.firstIndex(where: { $0.index == adjustedIndex }) else {
+            return adjustedIndex
+        }
+
+        let originalAudioStreams = (mediaSource.mediaStreams ?? [])
+            .filter { $0.type == .audio && !($0.isExternal ?? false) }
+
+        guard position < originalAudioStreams.count else { return adjustedIndex }
+
+        return originalAudioStreams[position].index
     }
 
     // MARK: sticky subtitle selection

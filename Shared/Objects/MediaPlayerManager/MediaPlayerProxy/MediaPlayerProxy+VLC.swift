@@ -75,7 +75,8 @@ class VLCMediaPlayerProxy: VideoMediaPlayerProxy,
     }
 
     func setAudioStream(_ stream: MediaStream) {
-        if let index = stream.index, index >= 0 {
+        let index = manager?.playbackItem?.vlcAudioTrackIndex(forAdjustedIndex: stream.index) ?? stream.index
+        if let index, index >= 0 {
             vlcUIProxy.setAudioTrack(.absolute(index))
         } else {
             vlcUIProxy.setAudioTrack(.auto)
@@ -156,6 +157,10 @@ extension VLCMediaPlayerProxy {
         @State
         private var lastBufferTraceSecond = -1
 
+        /// Times audio has been re-selected after VLC disabled it (#61)
+        @State
+        private var audioHealAttempts = 0
+
         #if DEBUG
         private let vlcDiagnosticLogger = VLCDiagnosticLogger()
         #endif
@@ -183,9 +188,7 @@ extension VLCMediaPlayerProxy {
 
             if !baseItem.isLiveStream {
                 configuration.startSeconds = startSeconds
-                if let index = item.selectedAudioStreamIndex, index >= 0 {
-                    configuration.audioIndex = .absolute(index)
-                } else if let index = mediaSource.defaultAudioStreamIndex, index >= 0 {
+                if let index = item.vlcAudioTrackIndex(forAdjustedIndex: item.selectedAudioStreamIndex), index >= 0 {
                     configuration.audioIndex = .absolute(index)
                 } else {
                     configuration.audioIndex = .auto
@@ -303,6 +306,24 @@ extension VLCMediaPlayerProxy {
                                 )
                             }
 
+                            // Fail audible: current track -1 with real tracks present
+                            // means VLC dropped the requested index (#61). Re-select
+                            // by position from VLC's own track list.
+                            if info.currentAudioTrack.index == -1, audioHealAttempts < 3 {
+                                let trackIndexes = info.audioTracks.map(\.index).filter { $0 >= 0 }
+                                if trackIndexes.isNotEmpty {
+                                    audioHealAttempts += 1
+                                    let position = playbackItem.audioStreams.firstIndex {
+                                        $0.index == playbackItem.selectedAudioStreamIndex
+                                    } ?? 0
+                                    let target = position < trackIndexes.count ? trackIndexes[position] : trackIndexes[0]
+                                    manager.logger.warning(
+                                        "VLC audio disabled with tracks \(trackIndexes) available, selecting \(target)"
+                                    )
+                                    proxy.setAudioTrack(.absolute(target))
+                                }
+                            }
+
                             if let proxy = manager.proxy as? any VideoMediaPlayerProxy {
                                 proxy.videoSize.value = info.videoSize
                             }
@@ -401,6 +422,7 @@ extension VLCMediaPlayerProxy {
                         lastReportedState = nil
                         stateDebounceTask?.cancel()
                         consecutiveBufferingCount = 0
+                        audioHealAttempts = 0
 
                         guard let playbackItem else { return }
 
