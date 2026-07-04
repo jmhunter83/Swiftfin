@@ -134,11 +134,17 @@ extension VideoPlayer {
 
         // MARK: - Focus Management
 
+        /// Invisible focus anchor. When the overlay hides, every control is
+        /// disabled or transparent; if nothing in the player holds focus the
+        /// next press never reaches this controller and the system handles
+        /// Menu itself, which suspends the app
+        private let focusBackstopView = FocusBackstopView()
+
         override var preferredFocusEnvironments: [UIFocusEnvironment] {
             if containerState.isPresentingOverlay || containerState.isPresentingSupplement {
                 return [playbackControlsViewController]
             }
-            return []
+            return [focusBackstopView]
         }
 
         /// Swipes scrub while paused with the overlay visible; veto focus
@@ -283,12 +289,13 @@ extension VideoPlayer {
         private func setupFocusObserver() {
             containerState.$overlayState
                 .removeDuplicates()
-                .sink { [weak self] (state: OverlayVisibility) in
+                .sink { [weak self] (_: OverlayVisibility) in
                     guard let self else { return }
-                    if state == .visible {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + AnimationTiming.focusUpdateDelay) { [weak self] in
-                            self?.requestFocusUpdateIfSafe()
-                        }
+                    // Re-resolve on hide as well: the focused control goes
+                    // disabled/transparent and focus must land on the backstop,
+                    // not escape the player
+                    DispatchQueue.main.asyncAfter(deadline: .now() + AnimationTiming.focusUpdateDelay) { [weak self] in
+                        self?.requestFocusUpdateIfSafe()
                     }
                 }
                 .store(in: &cancellables)
@@ -325,6 +332,10 @@ extension VideoPlayer {
             view.addSubview(supplementContainerView)
             supplementContainerViewController.didMove(toParent: self)
             supplementContainerView.backgroundColor = .clear
+
+            focusBackstopView.translatesAutoresizingMaskIntoConstraints = false
+            focusBackstopView.backgroundColor = .clear
+            view.addSubview(focusBackstopView)
         }
 
         private func setupConstraints() {
@@ -367,6 +378,13 @@ extension VideoPlayer {
             ]
 
             NSLayoutConstraint.activate(playbackControlsConstraints)
+
+            NSLayoutConstraint.activate([
+                focusBackstopView.widthAnchor.constraint(equalToConstant: 1),
+                focusBackstopView.heightAnchor.constraint(equalToConstant: 1),
+                focusBackstopView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                focusBackstopView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            ])
         }
 
         @objc
@@ -383,6 +401,10 @@ extension VideoPlayer {
         /// otherwise keep the overlay alive indefinitely
         override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
             super.didUpdateFocus(in: context, with: coordinator)
+
+            let from = context.previouslyFocusedItem.map { String(describing: type(of: $0)) } ?? "none"
+            let to = context.nextFocusedItem.map { String(describing: type(of: $0)) } ?? "none"
+            manager.logger.trace("Focus update: \(from) -> \(to)")
 
             guard let previous = context.previouslyFocusedItem,
                   let next = context.nextFocusedItem,
@@ -454,6 +476,12 @@ extension VideoPlayer {
 
             // Call super
             super.pressesCancelled(presses, with: event)
+        }
+
+        private class FocusBackstopView: UIView {
+            override var canBecomeFocused: Bool {
+                true
+            }
         }
     }
 }
