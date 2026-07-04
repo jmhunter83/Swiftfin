@@ -9,6 +9,7 @@
 import Defaults
 import Foundation
 import JellyfinAPI
+import Logging
 import SwiftUI
 import VLCUI
 
@@ -115,6 +116,18 @@ class VLCMediaPlayerProxy: VideoMediaPlayerProxy,
     }
 }
 
+#if DEBUG
+/// Bridges libVLC's log callback into the app log for the #61 diagnosis
+private final class VLCDiagnosticLogger: VLCVideoPlayerLogger {
+
+    private let logger = Logger.swiftfin()
+
+    func vlcVideoPlayer(didLog message: String, at level: VLCVideoPlayer.LoggingLevel) {
+        logger.trace("VLC[\(level)]: \(message)")
+    }
+}
+#endif
+
 extension VLCMediaPlayerProxy {
 
     struct VLCPlayerView: View {
@@ -138,6 +151,14 @@ extension VLCMediaPlayerProxy {
         private var stateDebounceTask: Task<Void, Never>?
         @State
         private var lastReportedState: VLCUI.VLCVideoPlayer.State?
+
+        /// Last whole second a buffer-health trace was emitted for (#61)
+        @State
+        private var lastBufferTraceSecond = -1
+
+        #if DEBUG
+        private let vlcDiagnosticLogger = VLCDiagnosticLogger()
+        #endif
 
         /// Decode stall detection for VideoToolbox recovery
         @State
@@ -247,9 +268,21 @@ extension VLCMediaPlayerProxy {
             return configuration
         }
 
+        private func makePlayer(for playbackItem: MediaPlayerItem) -> VLCVideoPlayer {
+            let player = VLCVideoPlayer(configuration: vlcConfiguration(for: playbackItem))
+            #if DEBUG
+            // Surface libVLC's own messages (decoder/aout selection, errors)
+            // for the no-audio diagnosis in #61. Debug builds only; VLC log
+            // callbacks on device can distort playback timing
+            return player.logger(vlcDiagnosticLogger, level: .info)
+            #else
+            return player
+            #endif
+        }
+
         var body: some View {
             if let playbackItem = manager.playbackItem, manager.state != .stopped, !manager.isStopping {
-                VLCVideoPlayer(configuration: vlcConfiguration(for: playbackItem))
+                makePlayer(for: playbackItem)
                     .proxy(proxy)
                     .onSecondsUpdated { newSeconds, info in
                         Task { @MainActor in
@@ -258,6 +291,17 @@ extension VLCMediaPlayerProxy {
                             }
 
                             manager.seconds = newSeconds
+
+                            // Decode health for #61: played buffers flat at 0
+                            // while decoded blocks climb means the aout ate the
+                            // audio; both flat means the decoder never ran
+                            let seconds = Int(newSeconds.seconds)
+                            if seconds > 0, seconds % 10 == 0, seconds != lastBufferTraceSecond {
+                                lastBufferTraceSecond = seconds
+                                manager.logger.trace(
+                                    "VLC audio health @\(seconds)s: decodedBlocks=\(info.numberOfDecodedAudioBlocks) playedBuffers=\(info.numberOfPlayedAudioBuffers) lostBuffers=\(info.numberOfLostAudioBuffers) currentTrack=\(info.currentAudioTrack.index)"
+                                )
+                            }
 
                             if let proxy = manager.proxy as? any VideoMediaPlayerProxy {
                                 proxy.videoSize.value = info.videoSize
