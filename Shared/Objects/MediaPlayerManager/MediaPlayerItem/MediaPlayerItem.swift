@@ -248,6 +248,54 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
         return originalSubtitleStreams[position].index
     }
 
+    /// The original server-space index for an audio stream in the adjusted
+    /// index space, for playback reporting. Reverses the adjusted renumbering
+    /// by position; a transcode only carries the server-selected audio track.
+    func serverAudioStreamIndex(forAdjustedIndex adjustedIndex: Int?) -> Int? {
+        guard let adjustedIndex else { return nil }
+        guard adjustedIndex >= 0 else { return adjustedIndex }
+
+        guard let position = audioStreams.firstIndex(where: { $0.index == adjustedIndex }) else {
+            return adjustedIndex
+        }
+
+        let streams = mediaSource.mediaStreams ?? []
+        let internalAudio = streams.filter { $0.type == .audio && !($0.isExternal ?? false) }
+        let externalAudio = streams.filter { $0.type == .audio && ($0.isExternal ?? false) }
+
+        let original: [MediaStream]
+        if mediaSource.transcodingURL == nil {
+            original = internalAudio + externalAudio
+        } else {
+            let selected = mediaSource.defaultAudioStreamIndex ?? 0
+            original = internalAudio.filter { $0.index == selected } + externalAudio
+        }
+
+        guard position < original.count else { return adjustedIndex }
+
+        return original[position].index
+    }
+
+    /// The original server-space index for a subtitle stream in the adjusted
+    /// index space, for playback reporting. Subtitle ordering is internal
+    /// then external for both direct play and transcode.
+    func serverSubtitleStreamIndex(forAdjustedIndex adjustedIndex: Int?) -> Int? {
+        guard let adjustedIndex else { return nil }
+        guard adjustedIndex >= 0 else { return adjustedIndex }
+
+        guard let position = subtitleStreams.firstIndex(where: { $0.index == adjustedIndex }) else {
+            return adjustedIndex
+        }
+
+        let streams = mediaSource.mediaStreams ?? []
+        let original = streams.filter { $0.type == .subtitle && !($0.isExternal ?? false) }
+            + streams.filter { $0.type == .subtitle && ($0.isExternal ?? false) }
+
+        guard position < original.count else { return adjustedIndex }
+
+        return original[position].index
+    }
+
     // MARK: sticky subtitle selection
 
     /// Key for the remembered subtitle choice, shared by all episodes of a series.

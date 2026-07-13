@@ -195,4 +195,50 @@ final class MediaPlayerItemAudioSelectionTests: XCTestCase {
 
         XCTAssertNil(item.vlcAudioTrackIndex(forAdjustedIndex: nil))
     }
+
+    // MARK: server-space reporting indexes
+
+    func testServerAudioIndexReversesAdjustedForAudioFirstFile() {
+        let item = makeItem(mediaSource: makeAudioFirstMediaSource())
+
+        // Adjusted audio is 1 (video-first renumbering); the server knows it as 0
+        XCTAssertEqual(item.serverAudioStreamIndex(forAdjustedIndex: 1), 0)
+    }
+
+    func testServerAudioIndexUnchangedForVideoFirstFile() {
+        let mediaSource = makeMediaSource(defaultAudioStreamIndex: 1, audioLanguages: ["eng", "spa"])
+        let item = makeItem(mediaSource: mediaSource)
+
+        XCTAssertEqual(item.serverAudioStreamIndex(forAdjustedIndex: 1), 1)
+        XCTAssertEqual(item.serverAudioStreamIndex(forAdjustedIndex: 2), 2)
+    }
+
+    func testServerAudioIndexTranscodeUsesSelectedTrack() {
+        // A transcode carries only the server-selected audio track, so the
+        // single adjusted index reports as that track's server index
+        let mediaSource = makeAudioFirstMediaSource(
+            defaultAudioStreamIndex: 1,
+            audioLanguages: ["eng", "spa"],
+            transcodingURL: "https://example.com/transcode.m3u8"
+        )
+        let item = makeItem(mediaSource: mediaSource)
+
+        XCTAssertEqual(item.serverAudioStreamIndex(forAdjustedIndex: 1), 1)
+
+        let defaultFirst = makeAudioFirstMediaSource(
+            defaultAudioStreamIndex: 0,
+            audioLanguages: ["eng", "spa"],
+            transcodingURL: "https://example.com/transcode.m3u8"
+        )
+        let itemDefaultFirst = makeItem(mediaSource: defaultFirst)
+
+        XCTAssertEqual(itemDefaultFirst.serverAudioStreamIndex(forAdjustedIndex: 1), 0)
+    }
+
+    func testServerAudioIndexNilPassesThrough() {
+        let mediaSource = makeMediaSource(defaultAudioStreamIndex: nil, audioLanguages: [])
+        let item = makeItem(mediaSource: mediaSource)
+
+        XCTAssertNil(item.serverAudioStreamIndex(forAdjustedIndex: nil))
+    }
 }

@@ -293,4 +293,48 @@ final class MediaPlayerItemSubtitleSelectionTests: XCTestCase {
         XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 3), 3)
     }
 
+    // MARK: server-space reporting indexes
+
+    func testServerSubtitleIndexReversesAdjustedDirectPlay() {
+        let item = makeItem(mediaSource: makeMediaSource(), preferred: nil)
+
+        XCTAssertEqual(item.serverSubtitleStreamIndex(forAdjustedIndex: 3), 1)
+        XCTAssertEqual(item.serverSubtitleStreamIndex(forAdjustedIndex: 4), 2)
+    }
+
+    func testServerSubtitleIndexReversesAdjustedTranscode() {
+        // Transcode renumbers to video(0), audio(1), subtitles(2, 3); the
+        // server still knows those subs as indexes 1 and 2
+        let item = makeItem(mediaSource: makeMediaSource(transcoding: true), preferred: nil)
+
+        XCTAssertEqual(item.serverSubtitleStreamIndex(forAdjustedIndex: 2), 1)
+        XCTAssertEqual(item.serverSubtitleStreamIndex(forAdjustedIndex: 3), 2)
+    }
+
+    func testServerSubtitleIndexSurvivesDroppedStreams() {
+        // The embedded image stream is dropped from the adjusted space
+        // entirely, shifting positions; server indexes must come from the
+        // original streams, not from counting
+        let mediaSource = makeMediaSource(
+            streams: [
+                makeStream(index: 0, type: .video),
+                makeStream(index: 1, type: .audio, language: "eng"),
+                makeStream(index: 2, type: .embeddedImage),
+                makeStream(index: 3, type: .subtitle, language: "eng"),
+                makeStream(index: 4, type: .subtitle, language: "spa", isExternal: true),
+            ],
+            defaultAudioStreamIndex: 1
+        )
+        let item = makeItem(mediaSource: mediaSource, preferred: nil)
+
+        XCTAssertEqual(item.serverSubtitleStreamIndex(forAdjustedIndex: 2), 3)
+        XCTAssertEqual(item.serverSubtitleStreamIndex(forAdjustedIndex: 3), 4)
+    }
+
+    func testServerSubtitleIndexOffAndNilPassThrough() {
+        let item = makeItem(mediaSource: makeMediaSource(), preferred: nil)
+
+        XCTAssertEqual(item.serverSubtitleStreamIndex(forAdjustedIndex: -1), -1)
+        XCTAssertNil(item.serverSubtitleStreamIndex(forAdjustedIndex: nil))
+    }
 }
