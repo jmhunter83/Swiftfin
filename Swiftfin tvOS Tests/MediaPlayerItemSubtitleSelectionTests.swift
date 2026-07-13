@@ -17,12 +17,13 @@ final class MediaPlayerItemSubtitleSelectionTests: XCTestCase {
 
     private let testURL = URL(string: "https://example.com/video")!
 
-    private func makeStream(index: Int, type: MediaStreamType, language: String? = nil) -> MediaStream {
+    private func makeStream(index: Int, type: MediaStreamType, language: String? = nil, isExternal: Bool = false) -> MediaStream {
         var stream = MediaStream()
         stream.index = index
         stream.type = type
         stream.language = language
         stream.displayTitle = language
+        stream.isExternal = isExternal
         return stream
     }
 
@@ -42,6 +43,19 @@ final class MediaPlayerItemSubtitleSelectionTests: XCTestCase {
         ]
         mediaSource.defaultAudioStreamIndex = 3
         mediaSource.defaultSubtitleStreamIndex = defaultSubtitleStreamIndex
+        mediaSource.transcodingURL = transcoding ? "/transcode" : nil
+        return mediaSource
+    }
+
+    /// Arbitrary stream layouts for container-order cases.
+    private func makeMediaSource(
+        streams: [MediaStream],
+        defaultAudioStreamIndex: Int? = nil,
+        transcoding: Bool = false
+    ) -> MediaSourceInfo {
+        var mediaSource = MediaSourceInfo()
+        mediaSource.mediaStreams = streams
+        mediaSource.defaultAudioStreamIndex = defaultAudioStreamIndex
         mediaSource.transcodingURL = transcoding ? "/transcode" : nil
         return mediaSource
     }
@@ -183,4 +197,100 @@ final class MediaPlayerItemSubtitleSelectionTests: XCTestCase {
 
         XCTAssertEqual(index, 3)
     }
+
+    // MARK: container-order VLC mapping (#61)
+
+    func testVLCSubtitleIndexMapsToContainerOrderDirectPlay() {
+        // Container order is video(0), subtitles(1, 2), audio(3, 4), so the
+        // adjusted subtitle indexes 3 and 4 are VLC tracks 1 and 2
+        let item = makeItem(mediaSource: makeMediaSource(), preferred: nil)
+
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 3), 1)
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 4), 2)
+    }
+
+    func testVLCSubtitleIndexUnchangedWhenSubsLast() {
+        // video(0), audio(1), subtitles(2, 3): adjusted order matches the container
+        let mediaSource = makeMediaSource(
+            streams: [
+                makeStream(index: 0, type: .video),
+                makeStream(index: 1, type: .audio, language: "eng"),
+                makeStream(index: 2, type: .subtitle, language: "eng"),
+                makeStream(index: 3, type: .subtitle, language: "spa"),
+            ],
+            defaultAudioStreamIndex: 1
+        )
+        let item = makeItem(mediaSource: mediaSource, preferred: nil)
+
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 2), 2)
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 3), 3)
+    }
+
+    func testVLCSubtitleIndexUnchangedForAudioFirstFileWithSubsLast() {
+        // Audio-first shifts video and audio in the adjusted space, but the
+        // subtitle track sits last in the container either way
+        let mediaSource = makeMediaSource(
+            streams: [
+                makeStream(index: 0, type: .audio, language: "eng"),
+                makeStream(index: 1, type: .video),
+                makeStream(index: 2, type: .subtitle, language: "eng"),
+            ],
+            defaultAudioStreamIndex: 0
+        )
+        let item = makeItem(mediaSource: mediaSource, preferred: nil)
+
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 2), 2)
+    }
+
+    func testVLCSubtitleIndexExternalPassesThrough() {
+        // External subs load as playback slaves, which VLC numbers after the
+        // container tracks - the same relative spot the adjusted space uses
+        let mediaSource = makeMediaSource(
+            streams: [
+                makeStream(index: 0, type: .video),
+                makeStream(index: 1, type: .subtitle, language: "eng"),
+                makeStream(index: 2, type: .audio, language: "eng"),
+                makeStream(index: 3, type: .subtitle, language: "spa", isExternal: true),
+            ],
+            defaultAudioStreamIndex: 2
+        )
+        let item = makeItem(mediaSource: mediaSource, preferred: nil)
+
+        // Internal sub at adjusted 2 maps to container index 1; external stays put
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 2), 1)
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 3), 3)
+    }
+
+    func testVLCSubtitleIndexExternalPassesThroughAudioFirst() {
+        let mediaSource = makeMediaSource(
+            streams: [
+                makeStream(index: 0, type: .audio, language: "eng"),
+                makeStream(index: 1, type: .video),
+                makeStream(index: 2, type: .subtitle, language: "eng"),
+                makeStream(index: 3, type: .subtitle, language: "spa", isExternal: true),
+            ],
+            defaultAudioStreamIndex: 0
+        )
+        let item = makeItem(mediaSource: mediaSource, preferred: nil)
+
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 2), 2)
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 3), 3)
+    }
+
+    func testVLCSubtitleIndexOffAndNilPassThrough() {
+        let item = makeItem(mediaSource: makeMediaSource(), preferred: nil)
+
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: -1), -1)
+        XCTAssertNil(item.vlcSubtitleTrackIndex(forAdjustedIndex: nil))
+    }
+
+    func testVLCSubtitleIndexUnchangedForTranscode() {
+        // Transcoded subs arrive as extracted slaves aligned with the
+        // adjusted order, so the index passes through like the audio path
+        let item = makeItem(mediaSource: makeMediaSource(transcoding: true), preferred: nil)
+
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 2), 2)
+        XCTAssertEqual(item.vlcSubtitleTrackIndex(forAdjustedIndex: 3), 3)
+    }
+
 }

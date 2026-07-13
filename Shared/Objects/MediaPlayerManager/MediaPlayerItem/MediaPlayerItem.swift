@@ -224,6 +224,30 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
         return originalAudioStreams[position].index
     }
 
+    /// The VLC track index for a subtitle stream in the adjusted index space.
+    ///
+    /// Internal subtitles map by position to their original container index,
+    /// mirroring `vlcAudioTrackIndex(forAdjustedIndex:)`. External subtitles
+    /// load as playback slaves, which VLC numbers after the container tracks,
+    /// the same relative spot the adjusted space assigns them, so they pass
+    /// through unchanged, as do -1 (off) and transcoded streams.
+    func vlcSubtitleTrackIndex(forAdjustedIndex adjustedIndex: Int?) -> Int? {
+        guard let adjustedIndex else { return nil }
+        guard adjustedIndex >= 0 else { return adjustedIndex }
+        guard mediaSource.transcodingURL == nil else { return adjustedIndex }
+
+        guard let position = subtitleStreams.firstIndex(where: { $0.index == adjustedIndex }),
+              !(subtitleStreams[position].isExternal ?? false)
+        else { return adjustedIndex }
+
+        let originalSubtitleStreams = (mediaSource.mediaStreams ?? [])
+            .filter { $0.type == .subtitle && !($0.isExternal ?? false) }
+
+        guard position < originalSubtitleStreams.count else { return adjustedIndex }
+
+        return originalSubtitleStreams[position].index
+    }
+
     // MARK: sticky subtitle selection
 
     /// Key for the remembered subtitle choice, shared by all episodes of a series.

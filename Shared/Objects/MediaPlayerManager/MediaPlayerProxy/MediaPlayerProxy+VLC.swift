@@ -84,7 +84,8 @@ class VLCMediaPlayerProxy: VideoMediaPlayerProxy,
     }
 
     func setSubtitleStream(_ stream: MediaStream) {
-        vlcUIProxy.setSubtitleTrack(.absolute(stream.index ?? -1))
+        let index = manager?.playbackItem?.vlcSubtitleTrackIndex(forAdjustedIndex: stream.index) ?? stream.index
+        vlcUIProxy.setSubtitleTrack(.absolute(index ?? -1))
     }
 
     func setAspectFill(_ aspectFill: Bool) {
@@ -193,7 +194,7 @@ extension VLCMediaPlayerProxy {
                 } else {
                     configuration.audioIndex = .auto
                 }
-                if let index = item.selectedSubtitleStreamIndex {
+                if let index = item.vlcSubtitleTrackIndex(forAdjustedIndex: item.selectedSubtitleStreamIndex) {
                     configuration.subtitleIndex = .absolute(index)
                 } else {
                     configuration.subtitleIndex = .absolute(mediaSource.defaultSubtitleStreamIndex ?? -1)
