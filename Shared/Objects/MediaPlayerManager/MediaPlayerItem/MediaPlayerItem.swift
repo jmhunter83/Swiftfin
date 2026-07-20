@@ -123,14 +123,20 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
 
         // Select audio stream based on user's preferred language, falling back to server default,
         // then first available audio track. Avoid using -1 for audio, as VLC treats it as disabled.
+        // defaultAudioStreamIndex is in server index space; map by position within the audio
+        // list like initialSubtitleStreamIndex does.
         let preferredLanguage = Defaults[.VideoPlayer.Audio.preferredLanguage]
+        let originalAudioStreams = (mediaSource.mediaStreams ?? [])
+            .filter { $0.type == .audio && !($0.isExternal ?? false) }
+
         if let preferredStream = audioStreams.first(where: { $0.language?.lowercased() == preferredLanguage.lowercased() }) {
             selectedAudioStreamIndex = preferredStream.index
         } else if let defaultIndex = mediaSource.defaultAudioStreamIndex,
                   defaultIndex >= 0,
-                  audioStreams.contains(where: { $0.index == defaultIndex })
+                  let position = originalAudioStreams.firstIndex(where: { $0.index == defaultIndex }),
+                  position < audioStreams.count
         {
-            selectedAudioStreamIndex = defaultIndex
+            selectedAudioStreamIndex = audioStreams[position].index
         } else {
             selectedAudioStreamIndex = audioStreams.first?.index
         }
@@ -192,6 +198,102 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
         }
 
         return mediaSource.defaultSubtitleStreamIndex ?? -1
+    }
+
+    /// The VLC track index for an audio stream in the adjusted index space.
+    ///
+    /// VLC numbers tracks by container order, while `adjustedTrackIndexes`
+    /// renumbers internal tracks video-first. Files with audio as the first
+    /// track (common in iTunes-style MP4s) would otherwise request a track
+    /// VLC doesn't have, which silently disables audio (#61). Transcoded
+    /// streams are muxed video-first by the server, so the adjusted index
+    /// already matches.
+    func vlcAudioTrackIndex(forAdjustedIndex adjustedIndex: Int?) -> Int? {
+        guard let adjustedIndex else { return nil }
+        guard mediaSource.transcodingURL == nil else { return adjustedIndex }
+
+        guard let position = audioStreams.firstIndex(where: { $0.index == adjustedIndex }) else {
+            return adjustedIndex
+        }
+
+        let originalAudioStreams = (mediaSource.mediaStreams ?? [])
+            .filter { $0.type == .audio && !($0.isExternal ?? false) }
+
+        guard position < originalAudioStreams.count else { return adjustedIndex }
+
+        return originalAudioStreams[position].index
+    }
+
+    /// The VLC track index for a subtitle stream in the adjusted index space.
+    ///
+    /// Internal subtitles map by position to their original container index,
+    /// mirroring `vlcAudioTrackIndex(forAdjustedIndex:)`. External subtitles
+    /// load as playback slaves, which VLC numbers after the container tracks,
+    /// the same relative spot the adjusted space assigns them, so they pass
+    /// through unchanged, as do -1 (off) and transcoded streams.
+    func vlcSubtitleTrackIndex(forAdjustedIndex adjustedIndex: Int?) -> Int? {
+        guard let adjustedIndex else { return nil }
+        guard adjustedIndex >= 0 else { return adjustedIndex }
+        guard mediaSource.transcodingURL == nil else { return adjustedIndex }
+
+        guard let position = subtitleStreams.firstIndex(where: { $0.index == adjustedIndex }),
+              !(subtitleStreams[position].isExternal ?? false)
+        else { return adjustedIndex }
+
+        let originalSubtitleStreams = (mediaSource.mediaStreams ?? [])
+            .filter { $0.type == .subtitle && !($0.isExternal ?? false) }
+
+        guard position < originalSubtitleStreams.count else { return adjustedIndex }
+
+        return originalSubtitleStreams[position].index
+    }
+
+    /// The original server-space index for an audio stream in the adjusted
+    /// index space, for playback reporting. Reverses the adjusted renumbering
+    /// by position; a transcode only carries the server-selected audio track.
+    func serverAudioStreamIndex(forAdjustedIndex adjustedIndex: Int?) -> Int? {
+        guard let adjustedIndex else { return nil }
+        guard adjustedIndex >= 0 else { return adjustedIndex }
+
+        guard let position = audioStreams.firstIndex(where: { $0.index == adjustedIndex }) else {
+            return adjustedIndex
+        }
+
+        let streams = mediaSource.mediaStreams ?? []
+        let internalAudio = streams.filter { $0.type == .audio && !($0.isExternal ?? false) }
+        let externalAudio = streams.filter { $0.type == .audio && ($0.isExternal ?? false) }
+
+        let original: [MediaStream]
+        if mediaSource.transcodingURL == nil {
+            original = internalAudio + externalAudio
+        } else {
+            let selected = mediaSource.defaultAudioStreamIndex ?? 0
+            original = internalAudio.filter { $0.index == selected } + externalAudio
+        }
+
+        guard position < original.count else { return adjustedIndex }
+
+        return original[position].index
+    }
+
+    /// The original server-space index for a subtitle stream in the adjusted
+    /// index space, for playback reporting. Subtitle ordering is internal
+    /// then external for both direct play and transcode.
+    func serverSubtitleStreamIndex(forAdjustedIndex adjustedIndex: Int?) -> Int? {
+        guard let adjustedIndex else { return nil }
+        guard adjustedIndex >= 0 else { return adjustedIndex }
+
+        guard let position = subtitleStreams.firstIndex(where: { $0.index == adjustedIndex }) else {
+            return adjustedIndex
+        }
+
+        let streams = mediaSource.mediaStreams ?? []
+        let original = streams.filter { $0.type == .subtitle && !($0.isExternal ?? false) }
+            + streams.filter { $0.type == .subtitle && ($0.isExternal ?? false) }
+
+        guard position < original.count else { return adjustedIndex }
+
+        return original[position].index
     }
 
     // MARK: sticky subtitle selection

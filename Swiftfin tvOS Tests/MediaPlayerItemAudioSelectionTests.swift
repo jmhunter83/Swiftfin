@@ -104,4 +104,141 @@ final class MediaPlayerItemAudioSelectionTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(item.selectedAudioStreamIndex ?? -1, 0)
         XCTAssertEqual(item.selectedAudioStreamIndex, item.audioStreams.first?.index)
     }
+
+    // MARK: audio-first containers (#61)
+
+    /// iTunes-style layout: audio is the first track in the container,
+    /// so its server index is 0 and VLC numbers it 0.
+    private func makeAudioFirstMediaSource(
+        defaultAudioStreamIndex: Int? = 0,
+        audioLanguages: [String] = ["eng"],
+        transcodingURL: String? = nil
+    ) -> MediaSourceInfo {
+        var mediaStreams: [MediaStream] = []
+
+        for (offset, language) in audioLanguages.enumerated() {
+            mediaStreams.append(
+                makeStream(index: offset, type: .audio, language: language, displayTitle: language)
+            )
+        }
+        mediaStreams.append(makeStream(index: audioLanguages.count, type: .video))
+        mediaStreams.append(makeStream(index: audioLanguages.count + 1, type: .subtitle))
+
+        var mediaSource = MediaSourceInfo()
+        mediaSource.transcodingURL = transcodingURL
+        mediaSource.mediaStreams = mediaStreams
+        mediaSource.defaultAudioStreamIndex = defaultAudioStreamIndex
+        return mediaSource
+    }
+
+    func testVLCIndexMapsToContainerOrderForAudioFirstFile() {
+        let originalPreferredLanguage = Defaults[.VideoPlayer.Audio.preferredLanguage]
+        defer { Defaults[.VideoPlayer.Audio.preferredLanguage] = originalPreferredLanguage }
+        Defaults[.VideoPlayer.Audio.preferredLanguage] = "zzz"
+
+        let item = makeItem(mediaSource: makeAudioFirstMediaSource())
+
+        // Adjusted space renumbers video-first, so the only audio stream is 1
+        XCTAssertEqual(item.selectedAudioStreamIndex, 1)
+        // VLC numbers by container order, where audio is track 0
+        XCTAssertEqual(item.vlcAudioTrackIndex(forAdjustedIndex: item.selectedAudioStreamIndex), 0)
+    }
+
+    func testVLCIndexUnchangedForVideoFirstFile() {
+        let originalPreferredLanguage = Defaults[.VideoPlayer.Audio.preferredLanguage]
+        defer { Defaults[.VideoPlayer.Audio.preferredLanguage] = originalPreferredLanguage }
+        Defaults[.VideoPlayer.Audio.preferredLanguage] = "zzz"
+
+        let mediaSource = makeMediaSource(defaultAudioStreamIndex: 1, audioLanguages: ["eng", "spa"])
+        let item = makeItem(mediaSource: mediaSource)
+
+        XCTAssertEqual(item.vlcAudioTrackIndex(forAdjustedIndex: 1), 1)
+        XCTAssertEqual(item.vlcAudioTrackIndex(forAdjustedIndex: 2), 2)
+    }
+
+    func testVLCIndexUnchangedForTranscode() {
+        let originalPreferredLanguage = Defaults[.VideoPlayer.Audio.preferredLanguage]
+        defer { Defaults[.VideoPlayer.Audio.preferredLanguage] = originalPreferredLanguage }
+        Defaults[.VideoPlayer.Audio.preferredLanguage] = "zzz"
+
+        // Server muxes the transcode video-first, so the adjusted index is
+        // already what VLC sees regardless of source container order
+        let mediaSource = makeAudioFirstMediaSource(transcodingURL: "https://example.com/transcode.m3u8")
+        let item = makeItem(mediaSource: mediaSource)
+
+        XCTAssertEqual(item.selectedAudioStreamIndex, 1)
+        XCTAssertEqual(item.vlcAudioTrackIndex(forAdjustedIndex: item.selectedAudioStreamIndex), 1)
+    }
+
+    func testMultiAudioAudioFirstMapsSecondTrack() {
+        let originalPreferredLanguage = Defaults[.VideoPlayer.Audio.preferredLanguage]
+        defer { Defaults[.VideoPlayer.Audio.preferredLanguage] = originalPreferredLanguage }
+        Defaults[.VideoPlayer.Audio.preferredLanguage] = "zzz"
+
+        // Server default is the second audio track (index 1 in server space)
+        let mediaSource = makeAudioFirstMediaSource(defaultAudioStreamIndex: 1, audioLanguages: ["eng", "spa"])
+        let item = makeItem(mediaSource: mediaSource)
+
+        // Selection maps the server default by position: spa is adjusted index 2
+        XCTAssertEqual(item.selectedAudioStreamIndex, 2)
+        XCTAssertEqual(
+            item.audioStreams.first(where: { $0.index == item.selectedAudioStreamIndex })?.language,
+            "spa"
+        )
+        // VLC's audio tracks are numbered [0, 1] in container order
+        XCTAssertEqual(item.vlcAudioTrackIndex(forAdjustedIndex: 2), 1)
+    }
+
+    func testVLCIndexNilForNilSelection() {
+        let mediaSource = makeMediaSource(defaultAudioStreamIndex: nil, audioLanguages: [])
+        let item = makeItem(mediaSource: mediaSource)
+
+        XCTAssertNil(item.vlcAudioTrackIndex(forAdjustedIndex: nil))
+    }
+
+    // MARK: server-space reporting indexes
+
+    func testServerAudioIndexReversesAdjustedForAudioFirstFile() {
+        let item = makeItem(mediaSource: makeAudioFirstMediaSource())
+
+        // Adjusted audio is 1 (video-first renumbering); the server knows it as 0
+        XCTAssertEqual(item.serverAudioStreamIndex(forAdjustedIndex: 1), 0)
+    }
+
+    func testServerAudioIndexUnchangedForVideoFirstFile() {
+        let mediaSource = makeMediaSource(defaultAudioStreamIndex: 1, audioLanguages: ["eng", "spa"])
+        let item = makeItem(mediaSource: mediaSource)
+
+        XCTAssertEqual(item.serverAudioStreamIndex(forAdjustedIndex: 1), 1)
+        XCTAssertEqual(item.serverAudioStreamIndex(forAdjustedIndex: 2), 2)
+    }
+
+    func testServerAudioIndexTranscodeUsesSelectedTrack() {
+        // A transcode carries only the server-selected audio track, so the
+        // single adjusted index reports as that track's server index
+        let mediaSource = makeAudioFirstMediaSource(
+            defaultAudioStreamIndex: 1,
+            audioLanguages: ["eng", "spa"],
+            transcodingURL: "https://example.com/transcode.m3u8"
+        )
+        let item = makeItem(mediaSource: mediaSource)
+
+        XCTAssertEqual(item.serverAudioStreamIndex(forAdjustedIndex: 1), 1)
+
+        let defaultFirst = makeAudioFirstMediaSource(
+            defaultAudioStreamIndex: 0,
+            audioLanguages: ["eng", "spa"],
+            transcodingURL: "https://example.com/transcode.m3u8"
+        )
+        let itemDefaultFirst = makeItem(mediaSource: defaultFirst)
+
+        XCTAssertEqual(itemDefaultFirst.serverAudioStreamIndex(forAdjustedIndex: 1), 0)
+    }
+
+    func testServerAudioIndexNilPassesThrough() {
+        let mediaSource = makeMediaSource(defaultAudioStreamIndex: nil, audioLanguages: [])
+        let item = makeItem(mediaSource: mediaSource)
+
+        XCTAssertNil(item.serverAudioStreamIndex(forAdjustedIndex: nil))
+    }
 }

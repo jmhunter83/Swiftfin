@@ -9,6 +9,7 @@
 import Defaults
 import Foundation
 import JellyfinAPI
+import Logging
 import SwiftUI
 import VLCUI
 
@@ -74,7 +75,8 @@ class VLCMediaPlayerProxy: VideoMediaPlayerProxy,
     }
 
     func setAudioStream(_ stream: MediaStream) {
-        if let index = stream.index, index >= 0 {
+        let index = manager?.playbackItem?.vlcAudioTrackIndex(forAdjustedIndex: stream.index) ?? stream.index
+        if let index, index >= 0 {
             vlcUIProxy.setAudioTrack(.absolute(index))
         } else {
             vlcUIProxy.setAudioTrack(.auto)
@@ -82,7 +84,8 @@ class VLCMediaPlayerProxy: VideoMediaPlayerProxy,
     }
 
     func setSubtitleStream(_ stream: MediaStream) {
-        vlcUIProxy.setSubtitleTrack(.absolute(stream.index ?? -1))
+        let index = manager?.playbackItem?.vlcSubtitleTrackIndex(forAdjustedIndex: stream.index) ?? stream.index
+        vlcUIProxy.setSubtitleTrack(.absolute(index ?? -1))
     }
 
     func setAspectFill(_ aspectFill: Bool) {
@@ -115,6 +118,18 @@ class VLCMediaPlayerProxy: VideoMediaPlayerProxy,
     }
 }
 
+#if DEBUG
+/// Bridges libVLC's log callback into the app log for the #61 diagnosis
+private final class VLCDiagnosticLogger: VLCVideoPlayerLogger {
+
+    private let logger = Logger.swiftfin()
+
+    func vlcVideoPlayer(didLog message: String, at level: VLCVideoPlayer.LoggingLevel) {
+        logger.trace("VLC[\(level)]: \(message)")
+    }
+}
+#endif
+
 extension VLCMediaPlayerProxy {
 
     struct VLCPlayerView: View {
@@ -139,6 +154,18 @@ extension VLCMediaPlayerProxy {
         @State
         private var lastReportedState: VLCUI.VLCVideoPlayer.State?
 
+        /// Last whole second a buffer-health trace was emitted for (#61)
+        @State
+        private var lastBufferTraceSecond = -1
+
+        /// Times audio has been re-selected after VLC disabled it (#61)
+        @State
+        private var audioHealAttempts = 0
+
+        #if DEBUG
+        private let vlcDiagnosticLogger = VLCDiagnosticLogger()
+        #endif
+
         /// Decode stall detection for VideoToolbox recovery
         @State
         private var consecutiveBufferingCount = 0
@@ -162,14 +189,12 @@ extension VLCMediaPlayerProxy {
 
             if !baseItem.isLiveStream {
                 configuration.startSeconds = startSeconds
-                if let index = item.selectedAudioStreamIndex, index >= 0 {
-                    configuration.audioIndex = .absolute(index)
-                } else if let index = mediaSource.defaultAudioStreamIndex, index >= 0 {
+                if let index = item.vlcAudioTrackIndex(forAdjustedIndex: item.selectedAudioStreamIndex), index >= 0 {
                     configuration.audioIndex = .absolute(index)
                 } else {
                     configuration.audioIndex = .auto
                 }
-                if let index = item.selectedSubtitleStreamIndex {
+                if let index = item.vlcSubtitleTrackIndex(forAdjustedIndex: item.selectedSubtitleStreamIndex) {
                     configuration.subtitleIndex = .absolute(index)
                 } else {
                     configuration.subtitleIndex = .absolute(mediaSource.defaultSubtitleStreamIndex ?? -1)
@@ -247,9 +272,21 @@ extension VLCMediaPlayerProxy {
             return configuration
         }
 
+        private func makePlayer(for playbackItem: MediaPlayerItem) -> VLCVideoPlayer {
+            let player = VLCVideoPlayer(configuration: vlcConfiguration(for: playbackItem))
+            #if DEBUG
+            // Surface libVLC's own messages (decoder/aout selection, errors)
+            // for the no-audio diagnosis in #61. Debug builds only; VLC log
+            // callbacks on device can distort playback timing
+            return player.logger(vlcDiagnosticLogger, level: .info)
+            #else
+            return player
+            #endif
+        }
+
         var body: some View {
             if let playbackItem = manager.playbackItem, manager.state != .stopped, !manager.isStopping {
-                VLCVideoPlayer(configuration: vlcConfiguration(for: playbackItem))
+                makePlayer(for: playbackItem)
                     .proxy(proxy)
                     .onSecondsUpdated { newSeconds, info in
                         Task { @MainActor in
@@ -258,6 +295,35 @@ extension VLCMediaPlayerProxy {
                             }
 
                             manager.seconds = newSeconds
+
+                            // Decode health for #61: played buffers flat at 0
+                            // while decoded blocks climb means the aout ate the
+                            // audio; both flat means the decoder never ran
+                            let seconds = Int(newSeconds.seconds)
+                            if seconds > 0, seconds % 10 == 0, seconds != lastBufferTraceSecond {
+                                lastBufferTraceSecond = seconds
+                                manager.logger.trace(
+                                    "VLC audio health @\(seconds)s: decodedBlocks=\(info.numberOfDecodedAudioBlocks) playedBuffers=\(info.numberOfPlayedAudioBuffers) lostBuffers=\(info.numberOfLostAudioBuffers) currentTrack=\(info.currentAudioTrack.index)"
+                                )
+                            }
+
+                            // Fail audible: current track -1 with real tracks present
+                            // means VLC dropped the requested index (#61). Re-select
+                            // by position from VLC's own track list.
+                            if info.currentAudioTrack.index == -1, audioHealAttempts < 3 {
+                                let trackIndexes = info.audioTracks.map(\.index).filter { $0 >= 0 }
+                                if trackIndexes.isNotEmpty {
+                                    audioHealAttempts += 1
+                                    let position = playbackItem.audioStreams.firstIndex {
+                                        $0.index == playbackItem.selectedAudioStreamIndex
+                                    } ?? 0
+                                    let target = position < trackIndexes.count ? trackIndexes[position] : trackIndexes[0]
+                                    manager.logger.warning(
+                                        "VLC audio disabled with tracks \(trackIndexes) available, selecting \(target)"
+                                    )
+                                    proxy.setAudioTrack(.absolute(target))
+                                }
+                            }
 
                             if let proxy = manager.proxy as? any VideoMediaPlayerProxy {
                                 proxy.videoSize.value = info.videoSize
@@ -326,6 +392,16 @@ extension VLCMediaPlayerProxy {
                                     consecutiveBufferingCount = 0
                                     lastPlayingTime = Date()
                                     manager.proxy?.isBuffering.value = false
+
+                                    // current index -1 with tracks available means VLC muted
+                                    // the audio because our requested index didn't match (#61)
+                                    let audioTracks = info.audioTracks
+                                        .map { "\($0.index):\($0.title)" }
+                                        .joined(separator: ", ")
+                                    manager.logger.trace(
+                                        "VLC audio tracks: [\(audioTracks)], current: \(info.currentAudioTrack.index)"
+                                    )
+
                                     await manager.setPlaybackRequestStatus(status: .playing)
                                 case .paused:
                                     await manager.setPlaybackRequestStatus(status: .paused)
@@ -347,6 +423,7 @@ extension VLCMediaPlayerProxy {
                         lastReportedState = nil
                         stateDebounceTask?.cancel()
                         consecutiveBufferingCount = 0
+                        audioHealAttempts = 0
 
                         guard let playbackItem else { return }
 

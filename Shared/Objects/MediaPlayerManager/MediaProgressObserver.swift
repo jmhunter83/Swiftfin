@@ -124,13 +124,13 @@ class MediaProgressObserver: ViewModel, MediaPlayerObserver {
         Task {
             do {
                 var info = PlaybackStartInfo()
-                info.audioStreamIndex = item.selectedAudioStreamIndex
+                info.audioStreamIndex = item.serverAudioStreamIndex(forAdjustedIndex: item.selectedAudioStreamIndex)
                 info.itemID = item.baseItem.id
                 info.mediaSourceID = item.mediaSource.id
                 info.playSessionID = item.playSessionID
                 info.positionTicks = seconds?.ticks
                 info.sessionID = item.playSessionID
-                info.subtitleStreamIndex = item.selectedSubtitleStreamIndex
+                info.subtitleStreamIndex = item.serverSubtitleStreamIndex(forAdjustedIndex: item.selectedSubtitleStreamIndex)
 
                 let request = Paths.reportPlaybackStart(info)
                 let session = try requireSession()
@@ -187,14 +187,14 @@ class MediaProgressObserver: ViewModel, MediaPlayerObserver {
         Task {
             do {
                 var info = PlaybackProgressInfo()
-                info.audioStreamIndex = item.selectedAudioStreamIndex
+                info.audioStreamIndex = item.serverAudioStreamIndex(forAdjustedIndex: item.selectedAudioStreamIndex)
                 info.isPaused = isPaused
                 info.itemID = item.baseItem.id
                 info.mediaSourceID = item.mediaSource.id
                 info.playSessionID = item.playSessionID
                 info.positionTicks = seconds?.ticks
                 info.sessionID = item.playSessionID
-                info.subtitleStreamIndex = item.selectedSubtitleStreamIndex
+                info.subtitleStreamIndex = item.serverSubtitleStreamIndex(forAdjustedIndex: item.selectedSubtitleStreamIndex)
 
                 let request = Paths.reportPlaybackProgress(info)
                 let session = try requireSession()
