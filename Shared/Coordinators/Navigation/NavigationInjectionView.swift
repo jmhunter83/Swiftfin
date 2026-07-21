@@ -82,10 +82,24 @@ struct NavigationInjectionView: View {
         ) { route in
             let newCoordinator = NavigationCoordinator()
 
-            NavigationInjectionView(coordinator: newCoordinator) {
-                route.destination
+            // Push routes present as covers on tvOS, so Menu must dismiss them
+            // explicitly. Focused SwiftUI Menu rows (ListRowMenu) otherwise eat
+            // the press and the system suspends the app. Fullscreen routes (the
+            // video player) handle Menu themselves and must not be intercepted.
+            if case .push = route.transitionStyle {
+                NavigationInjectionView(coordinator: newCoordinator) {
+                    route.destination
+                }
+                .background(Color.black.ignoresSafeArea())
+                .onExitCommand {
+                    coordinator.presentedFullScreen = nil
+                }
+            } else {
+                NavigationInjectionView(coordinator: newCoordinator) {
+                    route.destination
+                }
+                .background(Color.black.ignoresSafeArea())
             }
-            .background(Color.black.ignoresSafeArea())
         }
         #else
         .presentation(
