@@ -41,24 +41,42 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $tabCoordinator.selectedTabID) {
             ForEach(tabCoordinator.tabs, id: \.item.id) { tab in
-                NavigationInjectionView(
-                    coordinator: tab.coordinator
-                ) {
-                    tab.item.content
-                }
-                .environmentObject(tabCoordinator)
-                .environment(\.tabItemSelected, tab.publisher)
-                .tabItem {
-                    Label(
-                        tab.item.title,
-                        systemImage: tab.item.systemImage
-                    )
-                    .labelStyle(tab.item.labelStyle)
-                    .symbolRenderingMode(.monochrome)
-                    .eraseToAnyView()
-                }
-                .tag(tab.item.id)
+                tabContent(for: tab)
+                    .tabItem {
+                        Label(
+                            tab.item.title,
+                            systemImage: tab.item.systemImage
+                        )
+                        .labelStyle(tab.item.labelStyle)
+                        .symbolRenderingMode(.monochrome)
+                        .eraseToAnyView()
+                    }
+                    .tag(tab.item.id)
             }
         }
+    }
+
+    @ViewBuilder
+    private func tabContent(for tab: TabCoordinator.TabData) -> some View {
+        let content = NavigationInjectionView(
+            coordinator: tab.coordinator
+        ) {
+            tab.item.content
+        }
+        .environmentObject(tabCoordinator)
+        .environment(\.tabItemSelected, tab.publisher)
+
+        #if os(tvOS)
+        // Menu at a tab root otherwise falls through to the system and
+        // suspends the app. Home keeps the system behavior so Menu can
+        // still exit from the app root.
+        content.if(tab.item.id != TabItem.home.id) { view in
+            view.onExitCommand {
+                tabCoordinator.selectedTabID = TabItem.home.id
+            }
+        }
+        #else
+        content
+        #endif
     }
 }
