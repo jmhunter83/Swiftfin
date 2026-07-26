@@ -15,13 +15,13 @@ struct AboutAppView: View {
     private var router
 
     var body: some View {
-        Form(image: .jellyfinBlobBlue) {
+        Form(image: .reefyLogo) {
 
             #if os(iOS)
             Section {
                 VStack(alignment: .center, spacing: 10) {
 
-                    Image(.jellyfinBlobBlue)
+                    Image(.reefyLogo)
                         .resizable()
                         .aspectRatio(1, contentMode: .fit)
                         .frame(height: 150)

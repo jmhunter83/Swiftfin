@@ -6,7 +6,7 @@
 // Copyright (c) 2025 Jellyfin & Jellyfin Contributors
 //
 
-DEVELOPMENT_TEAM = 
-PRODUCT_BUNDLE_IDENTIFIER = org.jellyfin.swiftfin
+DEVELOPMENT_TEAM =
+PRODUCT_BUNDLE_IDENTIFIER = com.jmhunter.reefy
 
 #include? "DevelopmentTeam.xcconfig"

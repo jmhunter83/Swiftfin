@@ -45,7 +45,7 @@ struct SplitLoginWindowView<Leading: View, Trailing: View>: View {
         }
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Image(uiImage: .jellyfinBlobBlue)
+                Image(uiImage: .reefyLogo)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: UIDevice.isTV ? 100 : 30)
