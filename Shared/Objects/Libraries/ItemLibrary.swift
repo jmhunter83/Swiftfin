@@ -294,6 +294,11 @@ private struct ItemLibraryBody<Content: View>: View {
                 viewModel.environment.filters = filters
             }
         #if os(tvOS)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                FilterBar(viewModel: filterViewModel)
+                    .padding(.top, 40)
+                    .padding(.horizontal, 50)
+            }
             .background(alignment: .top) {
                 if !router.isRootOfPath {
                     FocusedPosterCinematicBackgroundView()
