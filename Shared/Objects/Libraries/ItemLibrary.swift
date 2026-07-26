@@ -273,8 +273,25 @@ private struct ItemLibraryBody<Content: View>: View {
         self.content = content()
     }
 
-    var body: some View {
+    // tvOS has no navigation bar to hang a filter menu off of, so the bar
+    // takes real layout space above the grid instead of floating over it
+    @ViewBuilder
+    private var platformContent: some View {
+        #if os(tvOS)
+        VStack(spacing: 0) {
+            FilterBar(viewModel: filterViewModel)
+                .padding(.top, 40)
+                .padding(.horizontal, 50)
+
+            content
+        }
+        #else
         content
+        #endif
+    }
+
+    var body: some View {
+        platformContent
             .letterPickerBar(filterViewModel: filterViewModel)
             .onFirstAppear {
                 Task {
@@ -294,11 +311,6 @@ private struct ItemLibraryBody<Content: View>: View {
                 viewModel.environment.filters = filters
             }
         #if os(tvOS)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                FilterBar(viewModel: filterViewModel)
-                    .padding(.top, 40)
-                    .padding(.horizontal, 50)
-            }
             .background(alignment: .top) {
                 if !router.isRootOfPath {
                     FocusedPosterCinematicBackgroundView()
