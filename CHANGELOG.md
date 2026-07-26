@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.0.0] - 2026-07-26
+
+**Version**: 2.0.0 (Build 1)
+
+Reefy is rebuilt on Swiftfin 1.5. The old fork had drifted five years from upstream —
+2,963 commits ours against 3,062 theirs, with a merge base back in May 2021 — so every
+upstream fix had to be reimplemented by hand. Starting from 1.5 clears that debt and picks
+up seven months of upstream work in one go.
+
+### Changed
+
+- **Rebuilt on Swiftfin 1.5.** New tvOS media player, Liquid Glass, unified settings,
+  track index mapping that fixes audio and subtitle selection generally, customizable jump
+  intervals, playback speed persistence, content groups, VLCKit 3.7.2.
+- **Requires tvOS 26.** Every Apple TV HD and Apple TV 4K model runs it, but the box has to
+  be updated. Liquid Glass needs a 2nd-gen Apple TV 4K or later.
+- **Accent color is now coral** to match the app icon. Only affects installs that never set
+  a custom accent — an existing choice is kept.
+
+### Added
+
+- Filter and sort bar on tvOS library screens. Upstream gives tvOS a cinematic backdrop
+  where iOS gets the filter drawer, so there was no way to reach filters on the big screen.
+- Episode name and year in the player overlay, alongside the show and season/episode.
+- Orange position marker on the transport bar.
+
+### Fixed
+
+- **Signing in as a second Jellyfin user no longer 401s the first** (#57). Every user now
+  gets their own device identity, so tokens stop invalidating each other on a user switch.
+- Release years no longer read a year off for anything airing near New Year.
+
+---
+
 ## [1.0.0] - App Store Release
 
 **App Store Release**: Reefy is now live on the Apple App Store in 175 countries.
