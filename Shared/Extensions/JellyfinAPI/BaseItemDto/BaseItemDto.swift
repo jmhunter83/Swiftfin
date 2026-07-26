@@ -350,7 +350,9 @@ extension BaseItemDto {
     var premiereDateYear: String? {
         guard let premiereDate else { return nil }
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "YYYY"
+        // yyyy, not YYYY - the latter is the ISO week-year and lands on the
+        // wrong side of the new year for anything airing around Jan 1
+        dateFormatter.dateFormat = "yyyy"
         return dateFormatter.string(from: premiereDate)
     }
 
