@@ -101,16 +101,10 @@ private struct VideoPlayerSliderContent: SliderContentView {
         return abs(currentProgress - scrubbedProgress) > 0.001
     }
 
+    // keep a tick on screen while focused so the orange position marker
+    // stays visible - upstream hides it and leaves only the fill edge
     private var visibleTickProgress: Double? {
-        if shouldShowCurrentTick {
-            return currentProgress
-        }
-
-        if !sliderState.isFocused {
-            return scrubbedProgress
-        }
-
-        return nil
+        shouldShowCurrentTick ? currentProgress : scrubbedProgress
     }
 
     private func progress(for value: Double) -> Double {
@@ -150,7 +144,7 @@ private struct VideoPlayerSliderContent: SliderContentView {
 
                 if let visibleTickProgress {
                     Rectangle()
-                        .fill(activeColor.opacity(0.95))
+                        .fill(sliderState.isFocused ? Color.orange : activeColor.opacity(0.95))
                         .frame(width: tickWidth)
                         .offset(x: tickOffset(for: visibleTickProgress, in: proxy.size.width))
                 }
