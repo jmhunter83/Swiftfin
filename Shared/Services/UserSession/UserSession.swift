@@ -18,6 +18,7 @@ final class UserSession {
     lazy var client: JellyfinClient = JellyfinClient(
         configuration: .swiftfinConfiguration(
             url: server.effectiveServerURL,
+            deviceID: user.deviceID,
             accessToken: user.accessToken
         ),
         sessionConfiguration: .swiftfin,

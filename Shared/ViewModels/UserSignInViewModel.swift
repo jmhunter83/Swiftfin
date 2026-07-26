@@ -14,6 +14,7 @@ import JellyfinAPI
 import KeychainSwift
 import Logging
 import OrderedCollections
+import Pulse
 import SwiftUI
 
 // TODO: instead of just signing in duplicate user, send event for alert
@@ -28,7 +29,7 @@ import SwiftUI
 final class UserSignInViewModel: ObservableObject {
 
     typealias AccessPolicyPair = (policy: LocalUserAccessPolicy, evaluated: any EvaluatedLocalUserAccessPolicy)
-    typealias UserStateDataPair = (state: (state: UserState, accessToken: String), data: UserDto)
+    typealias UserStateDataPair = (state: (state: UserState, accessToken: String, deviceID: String), data: UserDto)
 
     struct EvaluatedPolicyMap {
         let action: (any EvaluatedLocalUserAccessPolicy) -> any EvaluatedLocalUserAccessPolicy
@@ -99,8 +100,39 @@ final class UserSignInViewModel: ObservableObject {
 
     let server: ServerState
 
+    /// Device ID for the current sign-in attempt. Jellyfin binds the token it
+    /// issues to the device ID that authenticated, so the same ID has to be
+    /// used for the auth request and then stored for that user's session
+    /// clients. Sharing one install-wide ID across users makes each new
+    /// sign-in invalidate the previous user's token.
+    private(set) var signInDeviceID: String = JellyfinClient.Configuration.generateDeviceID()
+    private var signInClient: JellyfinClient?
+
     init(server: ServerState) {
         self.server = server
+    }
+
+    /// Builds the client for the next authentication attempt around a freshly
+    /// generated device ID. Regenerated per attempt so two different users
+    /// signing in through this view model never share a device server-side.
+    ///
+    /// Quick connect has to hand this same client to the initiate call, since
+    /// the secret is redeemed against the device that started the exchange.
+    @discardableResult
+    func prepareSignInClient() -> JellyfinClient {
+        signInDeviceID = JellyfinClient.Configuration.generateDeviceID()
+
+        let client = JellyfinClient(
+            configuration: .swiftfinConfiguration(
+                url: server.effectiveServerURL,
+                deviceID: signInDeviceID
+            ),
+            sessionConfiguration: .swiftfin,
+            sessionDelegate: URLSessionProxyDelegate(logger: NetworkLogger.swiftfin())
+        )
+
+        signInClient = client
+        return client
     }
 
     @Function(\Action.Cases.getPublicData)
@@ -127,7 +159,7 @@ final class UserSignInViewModel: ObservableObject {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: .objectReplacement)
 
-        let response = try await server.client.signIn(username: username, password: password)
+        let response = try await prepareSignInClient().signIn(username: username, password: password)
 
         guard let accessToken = response.accessToken,
               let userData = response.user,
@@ -139,7 +171,7 @@ final class UserSignInViewModel: ObservableObject {
         }
 
         if let existingUser = existingUser(id: id) {
-            events.send(.existingUser(((existingUser, accessToken), userData)))
+            events.send(.existingUser(((existingUser, accessToken, signInDeviceID), userData)))
         } else {
             let newUserState = UserState(
                 id: id,
@@ -147,7 +179,7 @@ final class UserSignInViewModel: ObservableObject {
                 username: username
             )
 
-            events.send(.connected(((newUserState, accessToken), userData)))
+            events.send(.connected(((newUserState, accessToken, signInDeviceID), userData)))
         }
     }
 
@@ -155,7 +187,10 @@ final class UserSignInViewModel: ObservableObject {
     private func _signInQuickConnect(
         _ secret: String
     ) async throws {
-        let response = try await server.client.signIn(quickConnectSecret: secret)
+        // the same client that initiated the exchange, so the secret is
+        // redeemed against the device the code was issued for
+        let client = signInClient ?? prepareSignInClient()
+        let response = try await client.signIn(quickConnectSecret: secret)
 
         guard let accessToken = response.accessToken,
               let userData = response.user,
@@ -167,7 +202,7 @@ final class UserSignInViewModel: ObservableObject {
         }
 
         if let existingUser = existingUser(id: id) {
-            events.send(.existingUser(((existingUser, accessToken), userData)))
+            events.send(.existingUser(((existingUser, accessToken, signInDeviceID), userData)))
         } else {
             let newUserState = UserState(
                 id: id,
@@ -175,7 +210,7 @@ final class UserSignInViewModel: ObservableObject {
                 username: username
             )
 
-            events.send(.connected(((newUserState, accessToken), userData)))
+            events.send(.connected(((newUserState, accessToken, signInDeviceID), userData)))
         }
     }
 
@@ -226,6 +261,7 @@ final class UserSignInViewModel: ObservableObject {
 
         savedUserState.accessPolicy = accessPolicy
         savedUserState.accessToken = user.state.accessToken
+        savedUserState.deviceID = user.state.deviceID
         savedUserState.data = user.data
 
         if let evaluatedPinPolicy = evaluatedPolicy as? PinEvaluatedUserAccessPolicy {
@@ -263,7 +299,10 @@ final class UserSignInViewModel: ObservableObject {
         }
 
         if replaceForAccessToken {
+            // the device ID has to move with the token - the new one was issued
+            // against the device that just authenticated, not the stored one
             user.state.state.accessToken = user.state.accessToken
+            user.state.state.deviceID = user.state.deviceID
         }
 
         events.send(.saved(user.state.state))

@@ -13,8 +13,19 @@ import UIKit
 
 extension JellyfinClient.Configuration {
 
+    /// A device ID for a new user, unique so each Jellyfin user gets a distinct
+    /// device record and can reuse that record during future reauthentication.
+    static func generateDeviceID() -> String {
+        "\(UIDevice.platform)_\(UUID().uuidString)"
+    }
+
+    /// Configuration for server communication. Authenticated clients pass the
+    /// user's stored device ID so the server keeps their device record and
+    /// doesn't invalidate another user's token. Nil uses the install-wide base
+    /// ID, which is only correct for public, unauthenticated endpoints.
     static func swiftfinConfiguration(
         url: URL,
+        deviceID: String? = nil,
         accessToken: String? = nil
     ) -> Self {
 
@@ -24,7 +35,7 @@ extension JellyfinClient.Configuration {
             .unicodeScalars
             .filter { CharacterSet.urlQueryAllowed.contains($0) }
             .description
-        let deviceID = "\(UIDevice.platform)_\(UIDevice.vendorUUIDString)"
+        let baseDeviceID = "\(UIDevice.platform)_\(UIDevice.vendorUUIDString)"
         let version = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "0.0.1"
 
         return .init(
@@ -32,7 +43,7 @@ extension JellyfinClient.Configuration {
             accessToken: accessToken,
             client: client,
             deviceName: deviceName,
-            deviceID: deviceID,
+            deviceID: deviceID ?? baseDeviceID,
             version: version
         )
     }

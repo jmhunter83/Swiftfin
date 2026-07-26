@@ -169,7 +169,7 @@ struct UserSignInView: View {
                 Button(L10n.quickConnect) {
                     router.route(
                         to: .quickConnect(
-                            client: viewModel.server.client
+                            client: viewModel.prepareSignInClient()
                         ) { secret in
                             await viewModel.signInQuickConnect(secret: secret)
                         }

@@ -41,6 +41,36 @@ extension UserState {
         }
     }
 
+    /// The Jellyfin device ID this user's tokens were issued against. Generated
+    /// at sign-in and reused for reauthentication so the server updates the
+    /// same device record. Falls back to a derived ID for users stored before
+    /// per-user IDs were persisted, so their existing tokens keep working.
+    var deviceID: String {
+        get {
+            let keychain = Container.shared.keychainService()
+
+            if let deviceID = keychain.get("\(id)-deviceID") {
+                return deviceID
+            }
+
+            let legacyDeviceID = "\(UIDevice.platform)_\(UIDevice.vendorUUIDString)_\(id)"
+            keychain.set(
+                legacyDeviceID,
+                forKey: "\(id)-deviceID",
+                withAccess: .accessibleWhenUnlockedThisDeviceOnly
+            )
+
+            return legacyDeviceID
+        }
+        nonmutating set {
+            Container.shared.keychainService().set(
+                newValue,
+                forKey: "\(id)-deviceID",
+                withAccess: .accessibleWhenUnlockedThisDeviceOnly
+            )
+        }
+    }
+
     var data: UserDto {
         get {
             StoredValues[.User.data(id: id)]
@@ -111,6 +141,7 @@ extension UserState {
 
         let keychain = Container.shared.keychainService()
         keychain.delete("\(id)-pin")
+        keychain.delete("\(id)-deviceID")
     }
 
     /// Deletes user settings from `UserDefaults` and `StoredValues`
@@ -123,7 +154,11 @@ extension UserState {
     /// with an access token
     func getUserData(server: ServerState) async throws -> UserDto {
         let client = JellyfinClient(
-            configuration: .swiftfinConfiguration(url: server.effectiveServerURL, accessToken: accessToken),
+            configuration: .swiftfinConfiguration(
+                url: server.effectiveServerURL,
+                deviceID: deviceID,
+                accessToken: accessToken
+            ),
             sessionConfiguration: .swiftfin,
             sessionDelegate: URLSessionProxyDelegate(logger: NetworkLogger.swiftfin())
         )
