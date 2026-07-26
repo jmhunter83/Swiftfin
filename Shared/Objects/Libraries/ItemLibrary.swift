@@ -273,8 +273,10 @@ private struct ItemLibraryBody<Content: View>: View {
         self.content = content()
     }
 
-    // tvOS has no navigation bar to hang a filter menu off of, so the bar
-    // takes real layout space above the grid instead of floating over it
+    // tvOS gets no navigation bar chrome here to hang a toolbar off of - a
+    // ToolbarItem in this view simply doesn't render - so the bar takes real
+    // layout space above the grid. zIndex keeps the focused card's border
+    // above the posters; without it the grid wins and clips the highlight.
     @ViewBuilder
     private var platformContent: some View {
         #if os(tvOS)
@@ -282,6 +284,8 @@ private struct ItemLibraryBody<Content: View>: View {
             FilterBar(viewModel: filterViewModel)
                 .padding(.top, 40)
                 .padding(.horizontal, 50)
+                .padding(.bottom, 20)
+                .zIndex(1)
 
             content
         }
