@@ -12,6 +12,9 @@ extension Color {
 
     static let jellyfinPurple = Color(red: 172 / 255, green: 92 / 255, blue: 195 / 255, opacity: 1)
 
+    /// Coral, sampled from the jellyfish in the app icon
+    static let reefyCoral = Color(red: 255 / 255, green: 127 / 255, blue: 80 / 255, opacity: 1)
+
     var uiColor: UIColor {
         UIColor(self)
     }

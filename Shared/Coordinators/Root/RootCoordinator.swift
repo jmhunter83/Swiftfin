@@ -119,7 +119,7 @@ final class RootCoordinator: ObservableObject {
         splashScreenCancellable?.cancel()
 
         accentColorCancellable = Task {
-            applyAccentColor(.jellyfinPurple)
+            applyAccentColor(.reefyCoral)
         }
         .asAnyCancellable()
 
