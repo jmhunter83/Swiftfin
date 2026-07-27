@@ -81,7 +81,11 @@ struct MainTabView: View {
                         tab.item.displayTitle,
                         systemImage: tab.item.systemImage
                     )
+                    #if os(tvOS)
+                    .labelStyle(.tabItem(title: tab.item.displayTitle))
+                    #else
                     .labelStyle(tab.item.labelStyle)
+                    #endif
                     .symbolRenderingMode(.monochrome)
                     .eraseToAnyView()
                 }
