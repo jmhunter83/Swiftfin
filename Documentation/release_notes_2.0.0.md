@@ -11,19 +11,23 @@ Jellyfin for your Apple TV
 ## Promotional text (170)
 
 ```
-Years on a foundation that hadn't moved. We said we'd fix it, and here it is: full rebase, new player, real library filters. Needs tvOS 26. Update your Apple TV first.
+Requires tvOS 26. Update your Apple TV first. Then: the full rebase we promised, a new player, redesigned settings, and library filters that finally work.
 ```
 
 ## What's New (4000)
 
 ```
+Read this part first: Reefy 2.0 requires tvOS 26.
+
+Every Apple TV HD and every Apple TV 4K can run it, but the box has to be updated. If yours is on an older tvOS, Reefy will simply stop showing up in your updates, with no explanation and no warning. Update the Apple TV and it comes back. Liquid Glass wants a 2nd-gen Apple TV 4K or newer.
+
+Now the actual release.
+
 This is the big one, and it's the one we promised.
 
 Reefy has been running on a foundation that hadn't moved in years. The app worked, but underneath it the base was five years behind, which meant every improvement had to be rebuilt here by hand instead of just arriving. That was never going to hold. We said we'd deal with it.
 
 2.0 is a full rebase onto the current base. Seven months of work lands in one release, and from here updates come in the normal way instead of one at a time.
-
-Heads up: 2.0 needs tvOS 26. Every Apple TV HD and Apple TV 4K can run it, but you have to update the box first. Liquid Glass wants a 2nd-gen Apple TV 4K or newer.
 
 New player. Liquid Glass, an orange position marker on the transport bar, jump intervals you set yourself, and playback speed that survives a restart. Episode name and year now show in the overlay next to the show and season/episode.
 
@@ -40,9 +44,9 @@ Accent color is coral now, to match the icon. If you already set your own, yours
 ## TestFlight — What to Test (4000)
 
 ```
-Here's the rebase I've been promising. It's onto a much newer base, so treat it like a new app rather than an update. Poke at everything, but here's where it's most likely to be broken.
+Requires tvOS 26. Update your Apple TV before you go looking for this build, because on anything older it won't appear in TestFlight at all.
 
-Needs tvOS 26. Update your Apple TV first or the build won't show up.
+Here's the rebase I've been promising. It's onto a much newer base, so treat it like a new app rather than an update. Poke at everything, but here's where it's most likely to be broken.
 
 Library, settings, and saved users should carry over from 1.4.x. If anything came across empty or wrong that's the most important thing to tell me, and say what version you came from.
 
