@@ -39,9 +39,11 @@ extension VideoPlayer {
         var body: some View {
             VStack(spacing: 30) {
 
-                // Not gated on the overlay: the card has to appear while the
+                // Not gated on the overlay: these have to appear while the
                 // controls are hidden, which is the normal playback state
                 UpNextCard()
+
+                SkipPill()
 
                 Toolbar()
                     .isVisible(

@@ -149,6 +149,15 @@ class VideoPlayerContainerState: ObservableObject {
     @Published
     var isPresentingUpNext: Bool = false
 
+    /// The skip pill on screen, if any. Holds no focusable views either, so
+    /// the container routes select/play against it.
+    @Published
+    var activeSkipAction: VideoPlayerSkipAction? = nil
+
+    /// Set when the pill is dismissed with Menu, so it stays gone for the
+    /// rest of the item rather than coming back on the next tick.
+    var isSkipDismissed: Bool = false
+
     var scrubOriginSeconds: Duration?
 
     func commitScrub() {

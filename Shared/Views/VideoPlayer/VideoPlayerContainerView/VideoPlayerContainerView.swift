@@ -888,9 +888,33 @@ extension VideoPlayer {
             manager.playNewItem(provider: nextItem)
         }
 
+        /// Takes the skip the pill is currently offering.
+        ///
+        /// Returns whether there was one, so the press handlers can fall
+        /// through to their normal behaviour when there wasn't.
+        private func takeSkipAction() -> Bool {
+            guard let action = containerState.activeSkipAction else { return false }
+
+            containerState.activeSkipAction = nil
+
+            switch action {
+            case let .skipIntro(to: end):
+                manager.proxy?.setSeconds(end)
+                containerState.timer.poke()
+            case .nextEpisode:
+                playUpNextNow()
+            }
+
+            return true
+        }
+
         private func handlePlayPauseEnded() {
             if containerState.isPresentingUpNext {
                 playUpNextNow()
+                return
+            }
+
+            if takeSkipAction() {
                 return
             }
 
@@ -923,6 +947,10 @@ extension VideoPlayer {
                 return
             }
 
+            if takeSkipAction() {
+                return
+            }
+
             if !containerState.isPresentingOverlay {
                 containerState.isPresentingOverlay = true
                 containerState.timer.poke()
@@ -951,6 +979,12 @@ extension VideoPlayer {
                 // Let the episode play out and exit on its own
                 manager.isAutoPlayCancelled = true
                 containerState.isPresentingUpNext = false
+                return
+            }
+
+            if containerState.activeSkipAction != nil {
+                containerState.isSkipDismissed = true
+                containerState.activeSkipAction = nil
                 return
             }
 
