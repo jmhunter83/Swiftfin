@@ -43,9 +43,28 @@ extension VideoPlayer.PlaybackControls {
             manager.userSession?.user.data.configuration?.enableNextEpisodeAutoPlay == true
         }
 
+        // `evaluate` runs on every seconds tick, and `@Published` fires whether
+        // or not the value changed. An unguarded write here republishes
+        // `containerState` several times a second, re-rendering everything that
+        // holds it - including an open Menu, which visibly flickers.
+        private func show(remaining: Int) {
+            if remainingSeconds != remaining {
+                remainingSeconds = remaining
+            }
+
+            if !containerState.isPresentingUpNext {
+                containerState.isPresentingUpNext = true
+            }
+        }
+
         private func hide() {
-            remainingSeconds = nil
-            containerState.isPresentingUpNext = false
+            if remainingSeconds != nil {
+                remainingSeconds = nil
+            }
+
+            if containerState.isPresentingUpNext {
+                containerState.isPresentingUpNext = false
+            }
         }
 
         private func evaluate(seconds: Duration) {
@@ -78,8 +97,7 @@ extension VideoPlayer.PlaybackControls {
                 return
             }
 
-            remainingSeconds = max(1, Int(remaining.seconds.rounded()))
-            containerState.isPresentingUpNext = true
+            show(remaining: max(1, Int(remaining.seconds.rounded())))
         }
 
         @ViewBuilder
