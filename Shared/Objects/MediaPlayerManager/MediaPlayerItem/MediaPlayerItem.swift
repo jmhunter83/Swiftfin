@@ -45,6 +45,11 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
 
     private var hasResolvedInitialSubtitle = false
 
+    /// Intro and outro ranges the server has tagged, driving the skip pills.
+    /// Empty when the server has none or the request fails.
+    @Published
+    private(set) var mediaSegments: [MediaSegmentDto] = []
+
     private(set) var indexMap: MediaTrackIndexMap
 
     private var externalSubtitlesResolved = false
@@ -132,6 +137,30 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
         hasResolvedInitialSubtitle = true
 
         observers.append(MediaProgressObserver(item: self))
+
+        // Deliberately not awaited during build: a slow or segment-less
+        // server would otherwise hold up the start of playback
+        Task { await fetchMediaSegments() }
+    }
+
+    // MARK: media segments
+
+    private func fetchMediaSegments() async {
+        guard let itemID = baseItem.id, let userSession else { return }
+
+        do {
+            let request = Paths.getItemSegments(
+                itemID: itemID,
+                includeSegmentTypes: [.intro, .outro]
+            )
+            let response = try await userSession.client.send(request)
+
+            mediaSegments = response.value.items ?? []
+        } catch {
+            // Servers without the media segments API answer with an error,
+            // which just means no skip pills for this item
+            logger.trace("No media segments for item \(itemID): \(error.localizedDescription)")
+        }
     }
 
     // MARK: sticky subtitles
@@ -162,12 +191,21 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
     }
 
     private func recordStickySubtitleLanguage(for index: Int?) {
-        guard isRememberingSubtitleSelections, let index else { return }
+        guard let index else { return }
+
+        guard isRememberingSubtitleSelections else {
+            logger.trace("Not recording subtitle \(index): Remember Track Selection is off")
+            return
+        }
 
         if index == -1 {
             StoredValues[stickySubtitleKey] = Self.stickySubtitleOff
+            logger.trace("Recorded subtitle choice: off")
         } else if let language = subtitleStreams.first(where: { $0.index == index })?.language {
             StoredValues[stickySubtitleKey] = language.lowercased()
+            logger.trace("Recorded subtitle choice: \(language.lowercased()) (index \(index))")
+        } else {
+            logger.trace("Not recording subtitle \(index): the stream has no language")
         }
     }
 
