@@ -97,6 +97,14 @@ extension VideoPlayer {
                     return false
                 }
 
+                #if os(tvOS)
+                // The up next card sits on the bottom gradient, and credits are
+                // bright enough to swallow it without one
+                if containerState.isPresentingUpNext {
+                    return true
+                }
+                #endif
+
                 if containerState.isCompact {
                     return containerState.isPresentingPlaybackControls
                 } else {
@@ -109,6 +117,9 @@ extension VideoPlayer {
                 #if os(iOS)
                 .overlay(Color.black.opacity(shouldPresentDimOverlay ? 0.5 : 0.0))
                 .animation(.linear(duration: 0.2), value: containerState.isPresentingPlaybackControls)
+                #else
+                .overlay(Color.black.opacity(containerState.isPresentingUpNext ? 0.4 : 0.0))
+                .animation(.easeInOut(duration: 0.3), value: containerState.isPresentingUpNext)
                 #endif
                 .overlay {
                     GeometryReader { proxy in
