@@ -201,5 +201,17 @@ extension StoredValues.Keys {
                 default: false
             )
         }
+
+        /// The last subtitle choice made for a series or movie: a language
+        /// code, `"off"` when explicitly disabled, or `""` when never set.
+        ///
+        /// Keyed by series so a choice made on one episode carries to the next.
+        static func stickySubtitleLanguage(itemID: String?) -> Key<String> {
+            CurrentUserKey(
+                itemID,
+                field: "stickySubtitleLanguage",
+                default: ""
+            )
+        }
     }
 }

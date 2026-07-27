@@ -32,9 +32,18 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
     var selectedSubtitleStreamIndex: Int? = nil {
         didSet {
             guard selectedSubtitleStreamIndex != oldValue else { return }
+
+            // The assignment in init fires didSet, and recording there would
+            // store the server default as though the user had chosen it.
+            if hasResolvedInitialSubtitle {
+                recordStickySubtitleLanguage(for: selectedSubtitleStreamIndex)
+            }
+
             manager?.setTrack(type: .subtitle, from: oldValue, to: selectedSubtitleStreamIndex)
         }
     }
+
+    private var hasResolvedInitialSubtitle = false
 
     private(set) var indexMap: MediaTrackIndexMap
 
@@ -116,10 +125,50 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
         selectedAudioStreamIndex = resolvedAudioStreamIndex
 
         selectedSubtitleStreamIndex = initialSubtitleStreamIndex
+            ?? stickySubtitleStreamIndex()
             ?? mediaSource.defaultSubtitleStreamIndex
             ?? -1
 
+        hasResolvedInitialSubtitle = true
+
         observers.append(MediaProgressObserver(item: self))
+    }
+
+    // MARK: sticky subtitles
+
+    private static let stickySubtitleOff = "off"
+
+    /// Remembered against the series so a choice made on one episode carries
+    /// to the next; movies fall back to their own id.
+    private var stickySubtitleKey: StoredValues.Key<String> {
+        StoredValues.Keys.User.stickySubtitleLanguage(itemID: baseItem.seriesID ?? baseItem.id)
+    }
+
+    private var isRememberingSubtitleSelections: Bool {
+        userSession?.user.data.configuration?.isRememberSubtitleSelections == true
+    }
+
+    /// Stream indexes differ between episodes of the same series, so the
+    /// choice is stored and matched by language rather than by index.
+    private func stickySubtitleStreamIndex() -> Int? {
+        guard isRememberingSubtitleSelections else { return nil }
+
+        let stored = StoredValues[stickySubtitleKey]
+
+        guard stored.isNotEmpty else { return nil }
+        guard stored != Self.stickySubtitleOff else { return -1 }
+
+        return subtitleStreams.first { $0.language?.lowercased() == stored }?.index
+    }
+
+    private func recordStickySubtitleLanguage(for index: Int?) {
+        guard isRememberingSubtitleSelections, let index else { return }
+
+        if index == -1 {
+            StoredValues[stickySubtitleKey] = Self.stickySubtitleOff
+        } else if let language = subtitleStreams.first(where: { $0.index == index })?.language {
+            StoredValues[stickySubtitleKey] = language.lowercased()
+        }
     }
 
     /// Decides whether a track change can be performed by the player in place, or whether the server must produce a new stream.
@@ -133,7 +182,9 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
         case .audio:
 
             // Transcodes contain a single audio track and MUST rebuild.
-            if isTranscoding { return true }
+            if isTranscoding {
+                return true
+            }
 
             guard let newStream = audioStreams.first(where: { $0.index == newIndex }) else { return true }
 
@@ -149,7 +200,9 @@ class MediaPlayerItem: ViewModel, MediaPlayerObserver {
             let oldStream = oldIndex.flatMap { idx in subtitleStreams.first { $0.index == idx } }
 
             // Transitioning away from encoded subtitles always requires a rebuild so the server stops burning them into the video.
-            if oldStream?.deliveryMethod == .encode { return true }
+            if oldStream?.deliveryMethod == .encode {
+                return true
+            }
 
             // Catch if the new stream doesn't exist. If non-existent this will fallback to -1 and disable locally.
             guard let newStream = subtitleStreams.first(where: { $0.index == newIndex }) else { return false }
