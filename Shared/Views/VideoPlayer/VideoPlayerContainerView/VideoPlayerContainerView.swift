@@ -869,7 +869,20 @@ extension VideoPlayer {
             }
         }
 
+        /// Plays the queued item immediately, skipping the rest of the countdown.
+        private func playUpNextNow() {
+            containerState.isPresentingUpNext = false
+
+            guard let nextItem = manager.queue?.nextItem else { return }
+            manager.playNewItem(provider: nextItem)
+        }
+
         private func handlePlayPauseEnded() {
+            if containerState.isPresentingUpNext {
+                playUpNextNow()
+                return
+            }
+
             if containerState.isScrubbing {
                 containerState.cancelScrub()
                 containerState.timer.poke()
@@ -894,6 +907,11 @@ extension VideoPlayer {
         }
 
         private func handleSelectEnded(_ press: UIPress, event: UIPressesEvent?) {
+            if containerState.isPresentingUpNext {
+                playUpNextNow()
+                return
+            }
+
             if !containerState.isPresentingOverlay {
                 containerState.isPresentingOverlay = true
                 containerState.timer.poke()
@@ -918,6 +936,13 @@ extension VideoPlayer {
 
         @objc
         private func handleMenuEnded() {
+            if containerState.isPresentingUpNext {
+                // Let the episode play out and exit on its own
+                manager.isAutoPlayCancelled = true
+                containerState.isPresentingUpNext = false
+                return
+            }
+
             if containerState.isScrubbing {
                 containerState.cancelScrub()
                 containerState.timer.poke()

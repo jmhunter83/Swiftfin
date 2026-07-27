@@ -106,6 +106,7 @@ final class MediaPlayerManager: ViewModel {
                 self.item = playbackItem.baseItem
                 seconds = playbackItem.baseItem.startSeconds ?? .zero
                 playbackItem.manager = self
+                isAutoPlayCancelled = false
                 setSupplements()
 
                 logger.info(
@@ -131,6 +132,12 @@ final class MediaPlayerManager: ViewModel {
     /// can still run), so teardown checks this instead of state.
     @Published
     private(set) var isStopping = false
+
+    /// Set when the viewer dismisses the up next card, so the current
+    /// episode finishes and exits instead of rolling into the next one.
+    /// Cleared for each new item.
+    @Published
+    var isAutoPlayCancelled = false
 
     @Published
     private(set) var playbackRequestStatus: PlaybackRequestStatus = .playing
@@ -268,7 +275,10 @@ final class MediaPlayerManager: ViewModel {
             )
         }
 
-        if let nextItemProvider, try authenticatedUser.data.configuration?.enableNextEpisodeAutoPlay == true {
+        if let nextItemProvider,
+           !isAutoPlayCancelled,
+           try authenticatedUser.data.configuration?.enableNextEpisodeAutoPlay == true
+        {
             await self.playNewItem(provider: nextItemProvider)
         } else {
             await self.stop()

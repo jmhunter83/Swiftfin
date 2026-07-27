@@ -144,6 +144,11 @@ class VideoPlayerContainerState: ObservableObject {
     @Published
     var isPresentingCloseConfirmation: Bool = false
 
+    /// Whether the up next card is on screen. The card holds no focusable
+    /// views, so the container reads this to route select/play/menu to it.
+    @Published
+    var isPresentingUpNext: Bool = false
+
     var scrubOriginSeconds: Duration?
 
     func commitScrub() {

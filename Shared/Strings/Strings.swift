@@ -1734,6 +1734,10 @@ internal enum L10n {
   internal static let uploadFile = L10n.tr("Localizable", "uploadFile", fallback: "Upload file")
   /// Upload photo
   internal static let uploadPhoto = L10n.tr("Localizable", "uploadPhoto", fallback: "Upload photo")
+  /// Playing in %d
+  internal static func upNextPlayingIn(_ p1: Int) -> String {
+    return L10n.tr("Localizable", "upNextPlayingIn", p1, fallback: "Playing in %d")
+  }
   /// URL
   internal static let url = L10n.tr("Localizable", "url", fallback: "URL")
   /// Use
