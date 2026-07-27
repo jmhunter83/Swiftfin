@@ -142,9 +142,12 @@ class MediaProgressObserver: ViewModel, MediaPlayerObserver {
         guard Defaults[.sendProgressReports] else { return }
         #endif
 
+        // Captured because the observer clears `item` as soon as it is torn down
+        let baseItem = item.baseItem
+
         Task {
             var info = PlaybackStopInfo()
-            info.itemID = item.baseItem.id
+            info.itemID = baseItem.id
             info.liveStreamID = item.mediaSource.liveStreamID
             info.mediaSourceID = item.mediaSource.id
             info.playSessionID = item.playSessionID
@@ -153,6 +156,34 @@ class MediaProgressObserver: ViewModel, MediaPlayerObserver {
 
             let request = Paths.reportPlaybackStopped(info)
             try await send(request)
+
+            await postUserDataDidChange(for: baseItem)
+        }
+    }
+
+    /// Home's Next Up and Continue Watching rows only refresh off
+    /// `itemUserDataDidChange`, and nothing else in the player posts it.
+    ///
+    /// Runs after the stop report so the re-read reflects the finished
+    /// playback rather than the state the server had going in.
+    private func postUserDataDidChange(for baseItem: BaseItemDto) async {
+        guard let userSession else { return }
+
+        do {
+            let updated = try await baseItem.getFullItem(userSession: userSession)
+
+            guard var userData = updated.userData else { return }
+            userData.itemID = userData.itemID ?? updated.id ?? baseItem.id
+
+            Notifications[.itemUserDataDidChange].post(userData)
+        } catch {
+            logger.warning(
+                "Unable to re-read item after playback stopped",
+                metadata: [
+                    "itemID": .stringConvertible(baseItem.id ?? "Unknown"),
+                    "error": .stringConvertible(error.localizedDescription),
+                ]
+            )
         }
     }
 
