@@ -11,15 +11,17 @@ Jellyfin for your Apple TV
 ## Promotional text (170)
 
 ```
-Reefy 2.0 is a full rebase. New player, redesigned settings, and library filters that finally work on the big screen. Needs tvOS 26, so update your Apple TV first.
+Years on a foundation that hadn't moved. We said we'd fix it, and here it is: full rebase, new player, real library filters. Needs tvOS 26. Update your Apple TV first.
 ```
 
 ## What's New (4000)
 
 ```
-Reefy 2.0 is a rebase.
+This is the big one, and it's the one we promised.
 
-The app had drifted years off the upstream project it started from, so every fix was getting written twice. This one starts over from the current base and pulls in about seven months of upstream work at once.
+Reefy has been running on a foundation that hadn't moved in years. The app worked, but underneath it the base was five years behind, which meant every improvement had to be rebuilt here by hand instead of just arriving. That was never going to hold. We said we'd deal with it.
+
+2.0 is a full rebase onto the current base. Seven months of work lands in one release, and from here updates come in the normal way instead of one at a time.
 
 Heads up: 2.0 needs tvOS 26. Every Apple TV HD and Apple TV 4K can run it, but you have to update the box first. Liquid Glass wants a 2nd-gen Apple TV 4K or newer.
 
@@ -38,7 +40,7 @@ Accent color is coral now, to match the icon. If you already set your own, yours
 ## TestFlight — What to Test (4000)
 
 ```
-This is a rebase onto a much newer upstream base, so treat it like a new app rather than an update. Poke at everything, but here's where it's most likely to be broken.
+Here's the rebase I've been promising. It's onto a much newer base, so treat it like a new app rather than an update. Poke at everything, but here's where it's most likely to be broken.
 
 Needs tvOS 26. Update your Apple TV first or the build won't show up.
 
