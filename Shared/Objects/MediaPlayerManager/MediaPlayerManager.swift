@@ -125,6 +125,13 @@ final class MediaPlayerManager: ViewModel {
 
     @Published
     private(set) var item: BaseItemDto
+
+    /// One-way latch set by the first stop. The declared transition
+    /// guards don't block actions racing a stop (a late ended/autoplay
+    /// can still run), so teardown checks this instead of state.
+    @Published
+    private(set) var isStopping = false
+
     @Published
     private(set) var playbackRequestStatus: PlaybackRequestStatus = .playing
     @Published
@@ -226,25 +233,43 @@ final class MediaPlayerManager: ViewModel {
 
     @Function(\Action.Cases.ended)
     private func _ended() async throws {
-        // TODO: change to observe given seconds against runtime
-        //       instead of sent action?
+        // An in-flight stop wins over autoplay
+        guard !isStopping else { return }
+
+        // Capture before anything can change: `playNewItem` swaps `item`
+        // and the queue clears `nextItem` once `playbackItem` changes, so
+        // reading either one later gets the wrong episode.
+        let endedItemID = item.id
+        let nextItemProvider = queue?.nextItem
+
+        // `item` moves to the next episode while it loads, so a stale ended
+        // from the outgoing one arrives with the two out of sync.
+        guard playbackItem?.baseItem.id == endedItemID else { return }
+
+        guard item.isLiveStream != true else { return }
 
         // Ended should represent natural ending of playback, which
         // is verifiable by given seconds being near item runtime.
         // VLC proxy will send ended early.
-        guard let runtime = item.runtime else {
-            await self.stop()
-            return
-        }
-        let isNearEnd = (runtime - seconds) <= .seconds(1)
+        if let runtime = item.runtime {
+            let isNearEnd = (runtime - seconds) <= .seconds(1)
 
-        guard isNearEnd else {
-            // If not near end, ignore.
-            return
+            guard isNearEnd else {
+                // If not near end, ignore.
+                return
+            }
+        } else {
+            logger.warning(
+                "Ended event for item without runtime",
+                metadata: [
+                    "itemID": .stringConvertible(endedItemID ?? "Unknown"),
+                    "itemTitle": .stringConvertible(item.displayTitle),
+                ]
+            )
         }
 
-        if let nextItem = queue?.nextItem, try authenticatedUser.data.configuration?.enableNextEpisodeAutoPlay == true {
-            await self.playNewItem(provider: nextItem)
+        if let nextItemProvider, try authenticatedUser.data.configuration?.enableNextEpisodeAutoPlay == true {
+            await self.playNewItem(provider: nextItemProvider)
         } else {
             await self.stop()
         }
@@ -280,10 +305,18 @@ final class MediaPlayerManager: ViewModel {
 
     @Function(\Action.Cases.playNewItem)
     private func _playNewItem(_ provider: MediaPlayerItemProvider) async throws {
+        guard !isStopping else { return }
+
         item = provider.item
         setSupplements()
         proxy?.stop()
-        playbackItem = try await provider()
+        let newItem = try await provider()
+
+        // A stop may have arrived during the provider await; a cancelled
+        // task still runs to completion past the continuation, so check
+        // again before handing the item to the player
+        guard !isStopping else { return }
+        playbackItem = newItem
     }
 
     @Function(\Action.Cases.setBitrate)
@@ -372,6 +405,9 @@ final class MediaPlayerManager: ViewModel {
     //       - check that observers would respond correctly to stopping
     @Function(\Action.Cases.stop)
     private func _stop() async throws {
+        guard !isStopping else { return }
+        isStopping = true
+
         await self.cancel()
 
         proxy?.stop()
