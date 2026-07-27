@@ -1062,6 +1062,8 @@ internal enum L10n {
   internal static let newUser = L10n.tr("Localizable", "newUser", fallback: "New user")
   /// Next
   internal static let next = L10n.tr("Localizable", "next", fallback: "Next")
+  /// Next Episode
+  internal static let nextEpisode = L10n.tr("Localizable", "nextEpisode", fallback: "Next Episode")
   /// Next item
   internal static let nextItem = L10n.tr("Localizable", "nextItem", fallback: "Next item")
   /// Next Up
@@ -1498,6 +1500,8 @@ internal enum L10n {
   internal static let simple = L10n.tr("Localizable", "simple", fallback: "Simple")
   /// Size
   internal static let size = L10n.tr("Localizable", "size", fallback: "Size")
+  /// Skip Intro
+  internal static let skipIntro = L10n.tr("Localizable", "skipIntro", fallback: "Skip Intro")
   /// Slider
   internal static let slider = L10n.tr("Localizable", "slider", fallback: "Slider")
   /// Slow scrub
