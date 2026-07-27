@@ -219,6 +219,33 @@ extension VideoPlayer {
             return view
         }()
 
+        #if os(tvOS)
+        /// Invisible focus anchor. When the overlay hides, the controls go
+        /// transparent and nothing inside the player wants focus; if focus
+        /// escapes the container then Menu never reaches `handleMenuEnded`
+        /// and the system takes it, suspending the app.
+        private lazy var focusBackstopView: FocusBackstopView = {
+            let view = FocusBackstopView(frame: .zero)
+            view.translatesAutoresizingMaskIntoConstraints = false
+            view.backgroundColor = .clear
+            return view
+        }()
+
+        override var preferredFocusEnvironments: [UIFocusEnvironment] {
+            if containerState.isPresentingOverlay || containerState.isPresentingSupplement {
+                [playbackControlsViewController]
+            } else {
+                [focusBackstopView]
+            }
+        }
+
+        private class FocusBackstopView: UIView {
+            override var canBecomeFocused: Bool {
+                true
+            }
+        }
+        #endif
+
         private lazy var playerViewController: HostingController<AnyView> = {
             let controller = HostingController(
                 content: PlayerContainerView(player: player)
@@ -575,6 +602,24 @@ extension VideoPlayer {
                     self?.supplementContainerView.isUserInteractionEnabled = isPresenting
                 }
                 .store(in: &cancellables)
+
+            // Re-resolve on hide as well as show: the focused control goes
+            // transparent and focus has to land on the backstop rather than
+            // escape the player.
+            Publishers.Merge(
+                containerState.$isPresentingOverlay,
+                containerState.$isPresentingSupplement
+            )
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                    guard let self, self.viewIfLoaded?.window != nil else { return }
+                    self.setNeedsFocusUpdate()
+                    self.updateFocusIfNeeded()
+                }
+            }
+            .store(in: &cancellables)
             #endif
         }
 
@@ -624,6 +669,10 @@ extension VideoPlayer {
             view.addSubview(supplementContainerView)
             supplementContainerViewController.didMove(toParent: self)
             supplementContainerView.backgroundColor = .clear
+
+            #if os(tvOS)
+            view.addSubview(focusBackstopView)
+            #endif
 
             view.addSubview(initialHitBlockView)
             view.bringSubviewToFront(initialHitBlockView)
@@ -680,6 +729,15 @@ extension VideoPlayer {
                 initialHitBlockView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
                 initialHitBlockView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             ])
+
+            #if os(tvOS)
+            NSLayoutConstraint.activate([
+                focusBackstopView.widthAnchor.constraint(equalToConstant: 1),
+                focusBackstopView.heightAnchor.constraint(equalToConstant: 1),
+                focusBackstopView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                focusBackstopView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            ])
+            #endif
         }
 
         override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
