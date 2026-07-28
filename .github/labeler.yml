@@ -1,0 +1,125 @@
+# Pattern-based issue labeling (backup for Claude triage)
+# Uses keywords to suggest labels when Claude API is unavailable
+
+# Severity patterns
+"severity: critical":
+  - any:
+    - body-includes: "crash"
+    - body-includes: "crashes"
+    - body-includes: "data loss"
+    - body-includes: "security"
+    - title-includes: "crash"
+
+"severity: high":
+  - any:
+    - body-includes: "broken"
+    - body-includes: "not working"
+    - body-includes: "doesn't work"
+    - body-includes: "completely"
+    - body-includes: "unusable"
+
+# Area patterns
+"area: playback":
+  - any:
+    - body-includes: "playback"
+    - body-includes: "video"
+    - body-includes: "audio"
+    - body-includes: "player"
+    - body-includes: "streaming"
+    - body-includes: "buffering"
+    - body-includes: "codec"
+    - body-includes: "subtitle"
+    - title-includes: "playback"
+    - title-includes: "video"
+    - title-includes: "player"
+
+"area: library":
+  - any:
+    - body-includes: "library"
+    - body-includes: "browse"
+    - body-includes: "search"
+    - body-includes: "collection"
+    - body-includes: "media list"
+    - body-includes: "continue watching"
+    - body-includes: "up next"
+    - body-includes: "next up"
+    - title-includes: "library"
+    - title-includes: "browse"
+
+"area: ui":
+  - any:
+    - body-includes: "focus"
+    - body-includes: "navigation"
+    - body-includes: "layout"
+    - body-includes: "display"
+    - body-includes: "button"
+    - body-includes: "screen"
+    - body-includes: "interface"
+    - body-includes: "UI"
+    - title-includes: "focus"
+    - title-includes: "UI"
+    - title-includes: "navigation"
+
+"area: auth":
+  - any:
+    - body-includes: "login"
+    - body-includes: "authentication"
+    - body-includes: "server"
+    - body-includes: "connect"
+    - body-includes: "connection"
+    - body-includes: "sign in"
+    - body-includes: "password"
+    - title-includes: "login"
+    - title-includes: "auth"
+    - title-includes: "server"
+
+"area: sync":
+  - any:
+    - body-includes: "download"
+    - body-includes: "offline"
+    - body-includes: "sync"
+    - body-includes: "cache"
+    - title-includes: "download"
+    - title-includes: "offline"
+    - title-includes: "sync"
+
+"area: settings":
+  - any:
+    - body-includes: "settings"
+    - body-includes: "preference"
+    - body-includes: "configuration"
+    - body-includes: "option"
+    - title-includes: "settings"
+    - title-includes: "preference"
+
+# Type patterns
+"type: crash":
+  - any:
+    - body-includes: "crash"
+    - body-includes: "crashes"
+    - body-includes: "freeze"
+    - body-includes: "frozen"
+    - body-includes: "hang"
+    - body-includes: "unresponsive"
+    - title-includes: "crash"
+
+"type: regression":
+  - any:
+    - body-includes: "regression"
+    - body-includes: "used to work"
+    - body-includes: "worked before"
+    - body-includes: "stopped working"
+    - body-includes: "no longer"
+    - body-includes: "after update"
+    - title-includes: "regression"
+
+"type: performance":
+  - any:
+    - body-includes: "slow"
+    - body-includes: "laggy"
+    - body-includes: "lag"
+    - body-includes: "performance"
+    - body-includes: "memory"
+    - body-includes: "CPU"
+    - title-includes: "slow"
+    - title-includes: "performance"

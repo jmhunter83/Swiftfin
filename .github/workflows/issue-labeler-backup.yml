@@ -1,0 +1,124 @@
+name: Issue Labeler (Backup)
+
+# This is a backup labeler that runs only if Claude triage fails
+# Uses actions/github-script which safely handles inputs through JavaScript context
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Claude triage
+        run: sleep 120
+
+      - name: Check if already triaged
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number
+            });
+
+            const labels = issue.data.labels.map(l => l.name);
+            const hasTriageLabels = labels.some(l =>
+              l.startsWith('severity:') || l.startsWith('area:')
+            );
+
+            console.log(`Current labels: ${labels.join(', ')}`);
+            console.log(`Already triaged: ${hasTriageLabels}`);
+
+            return hasTriageLabels;
+          result-encoding: string
+
+      - name: Apply keyword-based labels
+        if: steps.check.outputs.result == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = (issue.title || '').toLowerCase();
+            const body = (issue.body || '').toLowerCase();
+            const content = title + ' ' + body;
+
+            const labelsToAdd = [];
+
+            // Severity detection
+            if (content.includes('crash') || content.includes('data loss') || content.includes('security')) {
+              labelsToAdd.push('severity: critical');
+            } else if (content.includes('broken') || content.includes('unusable') || content.includes("doesn't work")) {
+              labelsToAdd.push('severity: high');
+            } else if (content.includes('issue') || content.includes('problem') || content.includes('bug')) {
+              labelsToAdd.push('severity: medium');
+            }
+
+            // Area detection - using separate if blocks to allow multiple areas
+            // Check UI first - focus/navigation keywords indicate UI even if "player" is mentioned
+            const isUIIssue = content.includes('focus') || content.includes('navigation') ||
+                              content.includes('ui') || content.includes('layout') ||
+                              content.includes('button') || content.includes('scroll') ||
+                              content.includes('remote') || content.includes('escapes') ||
+                              content.includes('controls');
+
+            if (isUIIssue) {
+              labelsToAdd.push('area: ui');
+            }
+
+            // Playback - only if it's about actual video/audio stream, not player UI
+            const isPlaybackIssue = content.includes('codec') || content.includes('buffer') ||
+                                    content.includes('transcode') || content.includes('subtitle') ||
+                                    content.includes('audio sync') || content.includes('playback') ||
+                                    ((content.includes('video') || content.includes('audio')) && !isUIIssue);
+            if (isPlaybackIssue) {
+              labelsToAdd.push('area: playback');
+            }
+
+            if (content.includes('library') || content.includes('browse') || content.includes('search') || content.includes('up next')) {
+              labelsToAdd.push('area: library');
+            }
+            if (content.includes('login') || content.includes('server') || content.includes('connect') || content.includes('auth')) {
+              labelsToAdd.push('area: auth');
+            }
+            if (content.includes('download') || content.includes('offline') || content.includes('sync')) {
+              labelsToAdd.push('area: sync');
+            }
+            if (content.includes('settings') || content.includes('preference')) {
+              labelsToAdd.push('area: settings');
+            }
+
+            // Type detection
+            if (content.includes('crash') || content.includes('freeze') || content.includes('hang')) {
+              labelsToAdd.push('type: crash');
+            } else if (content.includes('regression') || content.includes('used to work') || content.includes('stopped working')) {
+              labelsToAdd.push('type: regression');
+            } else if (content.includes('slow') || content.includes('lag') || content.includes('performance')) {
+              labelsToAdd.push('type: performance');
+            }
+
+            if (labelsToAdd.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: labelsToAdd
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `🏷️ **Auto-labeled** (keyword matching)\n\nApplied: ${labelsToAdd.map(l => `\`${l}\``).join(', ')}\n\n*Note: Claude triage was unavailable, used keyword fallback.*`
+              });
+
+              console.log(`Applied backup labels: ${labelsToAdd.join(', ')}`);
+            } else {
+              console.log('No labels matched from keywords');
+            }

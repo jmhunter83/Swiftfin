@@ -29,6 +29,15 @@ The countdown drives the advance itself rather than waiting on the player's ende
 VLC sends that early, and when the reported position never quite reaches runtime it doesn't
 arrive at all.
 
+**Skip intro and next episode pills.** A pill in the bottom corner offers a jump, taken with
+select or play. During an intro the server has tagged it seeks to the end of that segment;
+once the credits roll and something is queued it becomes Next Episode. Segments come from the
+server's Media Segments API (Jellyfin 10.10+ with a segments plugin), and with no tagged outro
+the credits window falls back to the last two minutes so the pill still works without the
+plugin. The up next card suppresses the pill rather than stacking with it — both offer the
+same jump. Window logic lives in `VideoPlayerSkipAction.resolve` and is deliberately free of
+view state so it can be tested directly.
+
 **Reliable episode transitions.** Upstream's end-of-item handler reads the current item and
 the queue's next item *after* it may already have changed, so autoplay could stop instead of
 advancing, or advance to the wrong episode. Reefy captures both up front, ignores an ended
@@ -113,7 +122,6 @@ ported to the 1.5 base. Listed so they don't get quietly forgotten.
 |---|---|
 | Audio output mode setting | System Default / Auto / Stereo / Passthrough. Reefy #19, #55. Still advertised in `CHANGELOG.md`. |
 | Pre-play subtitle picker | A captions menu next to Play on the item screen. Reefy #5. The in-player picker still works. |
-| Skip intro / media segments | Never shipped; upstream's media-segments implementation is the intended source. Parked 2026-06-11. |
 | Menu at tab roots returns to Home | Separate from the in-player fix above. |
 | Menu inside pushed settings screens | Focused menu rows eat the press and the app suspends. |
 | Test target | `Swiftfin tvOS Tests/` was deleted by the rebase; roughly 480 lines of player and subtitle tests went with it. Restoring it needs `project.pbxproj` work. |
