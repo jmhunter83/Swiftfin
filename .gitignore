@@ -104,3 +104,10 @@ XcodeConfig/DevelopmentTeam.xcconfig
 
 # Other
 .idea
+
+# Local working notes and tool state, not part of the project
+ROADMAP.md
+task_plan.md
+notes.md
+.serena/
+CLAUDE.md
