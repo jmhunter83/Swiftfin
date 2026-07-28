@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.0.1] - 2026-07-28
+
+**Version**: 2.0.1 (Build 1)
+
+Series playback. Episodes hand off to each other, intros can be skipped, and subtitle
+choices carry across a show instead of resetting every episode.
+
+### Added
+
+- **Up next card.** In the last 30 seconds of an episode a card slides up with the next
+  one and a countdown, dimming the video behind it. Take it early or let it run.
+- **Skip intro.** Reads the server's Media Segments API (Jellyfin 10.10+ with a segments
+  plugin). A pill during a tagged intro seeks past it on one press.
+- **Next episode pill** once the credits start — the tagged outro if the server has one,
+  otherwise the last two minutes — and only when something is queued behind it.
+- **Sticky subtitles per series.** The track picked on one episode carries to the next,
+  including an explicit off. Keyed by series, so shows don't bleed into each other.
+
+### Fixed
+
+- Menu during playback no longer drops out of the app.
+- Home refreshes Next Up and Continue Watching after playback finishes.
+- Auto play no longer switches itself off when the toolbar is edited.
+- A stale end-of-playback event no longer derails autoplay.
+- The up next card stopped republishing container state on every tick.
+
+---
+
 ## [2.0.0] - 2026-07-26
 
 **Version**: 2.0.0 (Build 1)
